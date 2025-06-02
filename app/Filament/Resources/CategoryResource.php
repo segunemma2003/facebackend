@@ -58,14 +58,36 @@ class CategoryResource extends Resource
                                 Forms\Components\ColorPicker::make('color')
                                     ->label('Background Color')
                                     ->default('#f0f9ff'),
-                                Forms\Components\TextInput::make('image_url')
-                                    ->label('Image URL')
-                                    ->url(),
+
                                 Forms\Components\TextInput::make('sort_order')
                                     ->numeric()
                                     ->default(0),
                                 Forms\Components\Toggle::make('is_active')
                                     ->default(true),
+                            ]),
+                             Tabs\Tab::make('Media')
+                            ->schema([
+                                Forms\Components\FileUpload::make('featured_image')
+                                    ->label('Featured Image')
+                                    ->image()
+                                    ->imageEditor()
+                                    ->imageEditorAspectRatios([
+                                        '16:9',
+                                        '4:3',
+                                        '1:1',
+                                    ])
+                                    ->directory('categories')
+                                    ->disk('public')
+                                    ->visibility('public')
+                                    ->maxSize(5120) // 5MB
+                                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+                                    ->helperText('Upload a featured image for this category (max 5MB, recommended: 1200x675px)')
+                                    ->columnSpanFull(),
+                                Forms\Components\TextInput::make('image_url')
+                                    ->label('Fallback Image URL')
+                                    ->url()
+                                    ->helperText('Only used if no image is uploaded above')
+                                    ->columnSpanFull(),
                             ]),
                         Tabs\Tab::make('Voting Configuration')
                             ->schema([
@@ -101,6 +123,11 @@ class CategoryResource extends Resource
     {
         return $table
             ->columns([
+                 Tables\Columns\ImageColumn::make('featured_image')
+                    ->disk('public')
+                    ->size(60)
+                    ->circular()
+                    ->defaultImageUrl(fn ($record) => $record->image_url),
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable(),

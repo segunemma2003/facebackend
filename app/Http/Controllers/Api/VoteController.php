@@ -9,8 +9,72 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * @OA\Tag(
+ *     name="Voting",
+ *     description="API Endpoints for Voting"
+ * )
+ */
 class VoteController extends Controller
 {
+
+     /**
+     * @OA\Post(
+     *      path="/api/v1/votes/{nominee_id}",
+     *      operationId="voteForNominee",
+     *      tags={"Voting"},
+     *      summary="Vote for a nominee",
+     *      description="Cast a vote for a specific nominee",
+     *      @OA\Parameter(
+     *          name="nominee_id",
+     *          description="Nominee ID",
+     *          required=true,
+     *          in="path",
+     *          @OA\Schema(type="integer")
+     *      ),
+     *      @OA\RequestBody(
+     *          required=true,
+     *          @OA\JsonContent(
+     *              @OA\Property(property="ip_address", type="string", example="192.168.1.1", description="Voter IP address")
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Vote recorded successfully",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="success", type="boolean", example=true),
+     *              @OA\Property(property="message", type="string", example="Vote recorded successfully"),
+     *              @OA\Property(
+     *                  property="data",
+     *                  type="object",
+     *                  @OA\Property(property="nominee_id", type="integer", example=1),
+     *                  @OA\Property(property="new_vote_count", type="integer", example=25),
+     *                  @OA\Property(property="new_percentage", type="number", format="float", example=15.5)
+     *              )
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=422,
+     *          description="Validation error",
+     *          @OA\JsonContent(
+     *              @OA\Property(property="message", type="string", example="Voting is currently closed for this category."),
+     *              @OA\Property(
+     *                  property="errors",
+     *                  type="object",
+     *                  @OA\Property(
+     *                      property="voting",
+     *                      type="array",
+     *                      @OA\Items(type="string", example="You have already voted for this nominee.")
+     *                  )
+     *              )
+     *          )
+     *      ),
+     *      @OA\Response(
+     *          response=404,
+     *          description="Nominee not found"
+     *      )
+     * )
+     */
     public function vote(Request $request, Nominee $nominee): JsonResponse
     {
         $request->validate([

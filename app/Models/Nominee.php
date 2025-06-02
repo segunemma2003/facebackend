@@ -6,12 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class Nominee extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
+   protected $fillable = [
         'category_id',
         'name',
         'organization',
@@ -20,8 +21,11 @@ class Nominee extends Model
         'position',
         'location',
         'impact_summary',
-        'image_url',
-        'cover_image_url',
+        'profile_image', // New field for uploaded profile image
+        'cover_image', // New field for uploaded cover image
+        'gallery_images', // New field for uploaded gallery images (JSON array)
+        'image_url', // Keep for backward compatibility
+        'cover_image_url', // Keep for backward compatibility
         'video_url',
         'social_links',
         'votes',
@@ -34,6 +38,7 @@ class Nominee extends Model
 
     protected $casts = [
         'social_links' => 'array',
+        'gallery_images' => 'array', // Cast gallery images as array
         'can_vote' => 'boolean',
         'is_winner' => 'boolean',
         'is_active' => 'boolean',
@@ -41,6 +46,41 @@ class Nominee extends Model
     ];
 
     protected $appends = ['total_votes_count'];
+
+     public function getImageUrlAttribute()
+    {
+        if ($this->profile_image) {
+            return Storage::disk('public')->url($this->profile_image);
+        }
+        return $this->attributes['image_url'] ?? null;
+    }
+
+    public function getCoverImageUrlAttribute()
+    {
+        if ($this->cover_image) {
+            return Storage::disk('public')->url($this->cover_image);
+        }
+        return $this->attributes['cover_image_url'] ?? null;
+    }
+
+    public function getProfileThumbAttribute()
+    {
+        if ($this->profile_image) {
+            return Storage::disk('public')->url($this->profile_image);
+        }
+        return $this->attributes['image_url'] ?? null;
+    }
+
+    public function getGalleryImagesUrlsAttribute()
+    {
+        if ($this->gallery_images && is_array($this->gallery_images)) {
+            return array_map(function($image) {
+                return Storage::disk('public')->url($image);
+            }, $this->gallery_images);
+        }
+        return [];
+    }
+
 
     public function category(): BelongsTo
     {

@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('image_url');
             $table->integer('year');
             $table->timestamps();
-
+$table->string('profile_image')->nullable()->after('achievement');
             $table->index(['year', 'category']);
         });
     }

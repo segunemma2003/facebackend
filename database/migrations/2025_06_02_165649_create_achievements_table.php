@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('nominee_id')->constrained()->cascadeOnDelete();
             $table->string('title');
+            $table->string('achievement_image')->nullable()->after('date');
             $table->text('description');
             $table->string('date'); // Year or specific date
             $table->string('image_url')->nullable();

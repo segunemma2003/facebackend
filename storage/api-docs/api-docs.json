@@ -1,0 +1,926 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Awards Management API",
+        "description": "API for managing awards, nominees, voting, and events",
+        "contact": {
+            "email": "admin@example.com"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000",
+            "description": "Awards Management API Server"
+        }
+    ],
+    "paths": {
+        "/api/v1": {},
+        "/api/v1/categories": {
+            "get": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Get list of categories",
+                "description": "Returns list of categories with filtering options",
+                "operationId": "getCategories",
+                "parameters": [
+                    {
+                        "name": "region",
+                        "in": "query",
+                        "description": "Filter by region",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "Global",
+                                "Americas",
+                                "Europe",
+                                "Africa",
+                                "Asia-Pacific",
+                                "Middle East"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "voting_only",
+                        "in": "query",
+                        "description": "Show only categories with voting open",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Best Innovation Award"
+                                                    },
+                                                    "description": {
+                                                        "type": "string",
+                                                        "example": "Award for outstanding innovation"
+                                                    },
+                                                    "criteria": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "type": "string"
+                                                        }
+                                                    },
+                                                    "region": {
+                                                        "type": "string",
+                                                        "example": "Global"
+                                                    },
+                                                    "current_nominees": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "voting_open": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "voting_ends_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "days_remaining": {
+                                                        "type": "integer",
+                                                        "example": 15
+                                                    },
+                                                    "is_voting_active": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "color": {
+                                                        "type": "string",
+                                                        "example": "#f0f9ff"
+                                                    },
+                                                    "icon": {
+                                                        "type": "string",
+                                                        "example": "trophy"
+                                                    },
+                                                    "image_url": {
+                                                        "type": "string",
+                                                        "example": "https://example.com/image.jpg"
+                                                    },
+                                                    "total_votes": {
+                                                        "type": "integer",
+                                                        "example": 150
+                                                    },
+                                                    "nominees_count": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "winners_count": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/categories/{id}": {
+            "get": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Get category information",
+                "description": "Returns category data with nominees",
+                "operationId": "getCategoryById",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Category id",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Best Innovation Award"
+                                                },
+                                                "description": {
+                                                    "type": "string"
+                                                },
+                                                "criteria": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "region": {
+                                                    "type": "string"
+                                                },
+                                                "voting_open": {
+                                                    "type": "boolean"
+                                                },
+                                                "voting_starts_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "voting_ends_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "days_remaining": {
+                                                    "type": "integer"
+                                                },
+                                                "is_voting_active": {
+                                                    "type": "boolean"
+                                                },
+                                                "color": {
+                                                    "type": "string"
+                                                },
+                                                "icon": {
+                                                    "type": "string"
+                                                },
+                                                "image_url": {
+                                                    "type": "string"
+                                                },
+                                                "total_votes": {
+                                                    "type": "integer"
+                                                },
+                                                "nominees": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "organization": {
+                                                                "type": "string"
+                                                            },
+                                                            "description": {
+                                                                "type": "string"
+                                                            },
+                                                            "image_url": {
+                                                                "type": "string"
+                                                            },
+                                                            "votes": {
+                                                                "type": "integer"
+                                                            },
+                                                            "voting_percentage": {
+                                                                "type": "number",
+                                                                "format": "float"
+                                                            },
+                                                            "can_vote": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Category not found"
+                    }
+                }
+            }
+        },
+        "/api/v1/categories/stats": {
+            "get": {
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Get category statistics",
+                "description": "Returns statistical data about categories",
+                "operationId": "getCategoryStats",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total_categories": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "active_voting_categories": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "total_nominees": {
+                                                    "type": "integer",
+                                                    "example": 50
+                                                },
+                                                "total_votes": {
+                                                    "type": "integer",
+                                                    "example": 1500
+                                                },
+                                                "regions": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "category_breakdown": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "nominees_count": {
+                                                                "type": "integer"
+                                                            },
+                                                            "total_votes": {
+                                                                "type": "integer"
+                                                            },
+                                                            "voting_open": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/nominees": {
+            "get": {
+                "tags": [
+                    "Nominees"
+                ],
+                "summary": "Get list of nominees",
+                "description": "Returns list of nominees with filtering options",
+                "operationId": "getNominees",
+                "parameters": [
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "description": "Filter by category ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "description": "Filter by category name",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "winners_only",
+                        "in": "query",
+                        "description": "Show only winners",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "order_by",
+                        "in": "query",
+                        "description": "Order by field",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "votes",
+                            "enum": [
+                                "votes",
+                                "name",
+                                "created_at"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "order_direction",
+                        "in": "query",
+                        "description": "Order direction",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "desc",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "John Doe"
+                                                    },
+                                                    "organization": {
+                                                        "type": "string",
+                                                        "example": "Tech Corp"
+                                                    },
+                                                    "category": {
+                                                        "type": "string",
+                                                        "example": "Best Innovation Award"
+                                                    },
+                                                    "description": {
+                                                        "type": "string"
+                                                    },
+                                                    "image_url": {
+                                                        "type": "string"
+                                                    },
+                                                    "votes": {
+                                                        "type": "integer",
+                                                        "example": 25
+                                                    },
+                                                    "voting_percentage": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 15.5
+                                                    },
+                                                    "can_vote": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "is_winner": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    },
+                                                    "impact_summary": {
+                                                        "type": "string"
+                                                    },
+                                                    "location": {
+                                                        "type": "string",
+                                                        "example": "New York, USA"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/nominees/trending": {
+            "get": {
+                "tags": [
+                    "Nominees"
+                ],
+                "summary": "Get trending nominees",
+                "description": "Returns top 5 nominees by votes",
+                "operationId": "getTrendingNominees",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "John Doe"
+                                                    },
+                                                    "category": {
+                                                        "type": "string",
+                                                        "example": "Best Innovation Award"
+                                                    },
+                                                    "votes": {
+                                                        "type": "integer",
+                                                        "example": 25
+                                                    },
+                                                    "voting_percentage": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 15.5
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/registrations": {
+            "post": {
+                "tags": [
+                    "Registrations"
+                ],
+                "summary": "Create a new registration",
+                "description": "Register for the awards event",
+                "operationId": "createRegistration",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "first_name",
+                                    "last_name",
+                                    "email",
+                                    "phone",
+                                    "country",
+                                    "city",
+                                    "ticket_type",
+                                    "event_date"
+                                ],
+                                "properties": {
+                                    "first_name": {
+                                        "type": "string",
+                                        "example": "John"
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "example": "Doe"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "+1234567890"
+                                    },
+                                    "organization": {
+                                        "type": "string",
+                                        "example": "Tech Corp"
+                                    },
+                                    "country": {
+                                        "type": "string",
+                                        "example": "United States"
+                                    },
+                                    "city": {
+                                        "type": "string",
+                                        "example": "New York"
+                                    },
+                                    "dietary_requirements": {
+                                        "type": "string",
+                                        "example": "Vegetarian"
+                                    },
+                                    "ticket_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "standard",
+                                            "vip",
+                                            "corporate"
+                                        ],
+                                        "example": "standard"
+                                    },
+                                    "event_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-12-15"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Registration created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Registration completed successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "reference_number": {
+                                                    "type": "string",
+                                                    "example": "FGR24-123456"
+                                                },
+                                                "full_name": {
+                                                    "type": "string",
+                                                    "example": "John Doe"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "john@example.com"
+                                                },
+                                                "ticket_type": {
+                                                    "type": "string",
+                                                    "example": "standard"
+                                                },
+                                                "amount": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 250
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "confirmed"
+                                                },
+                                                "event_date": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/v1/registrations/lookup": {
+            "post": {
+                "tags": [
+                    "Registrations"
+                ],
+                "summary": "Look up registration",
+                "description": "Find registration by reference number and email",
+                "operationId": "lookupRegistration",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reference_number",
+                                    "email"
+                                ],
+                                "properties": {
+                                    "reference_number": {
+                                        "type": "string",
+                                        "example": "FGR24-123456"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "john@example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Registration found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "reference_number": {
+                                                    "type": "string"
+                                                },
+                                                "full_name": {
+                                                    "type": "string"
+                                                },
+                                                "email": {
+                                                    "type": "string"
+                                                },
+                                                "phone": {
+                                                    "type": "string"
+                                                },
+                                                "organization": {
+                                                    "type": "string"
+                                                },
+                                                "country": {
+                                                    "type": "string"
+                                                },
+                                                "city": {
+                                                    "type": "string"
+                                                },
+                                                "dietary_requirements": {
+                                                    "type": "string"
+                                                },
+                                                "ticket_type": {
+                                                    "type": "string"
+                                                },
+                                                "amount": {
+                                                    "type": "number",
+                                                    "format": "float"
+                                                },
+                                                "status": {
+                                                    "type": "string"
+                                                },
+                                                "event_date": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Registration not found"
+                    }
+                }
+            }
+        },
+        "/api/v1/votes/{nominee_id}": {
+            "post": {
+                "tags": [
+                    "Voting"
+                ],
+                "summary": "Vote for a nominee",
+                "description": "Cast a vote for a specific nominee",
+                "operationId": "voteForNominee",
+                "parameters": [
+                    {
+                        "name": "nominee_id",
+                        "in": "path",
+                        "description": "Nominee ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "ip_address": {
+                                        "description": "Voter IP address",
+                                        "type": "string",
+                                        "example": "192.168.1.1"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Vote recorded successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Vote recorded successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "nominee_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "new_vote_count": {
+                                                    "type": "integer",
+                                                    "example": 25
+                                                },
+                                                "new_percentage": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 15.5
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Voting is currently closed for this category."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "voting": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "You have already voted for this nominee."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Nominee not found"
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Categories",
+            "description": "API Endpoints for Categories"
+        },
+        {
+            "name": "Nominees",
+            "description": "API Endpoints for Nominees"
+        },
+        {
+            "name": "Registrations",
+            "description": "API Endpoints for Event Registrations"
+        },
+        {
+            "name": "Voting",
+            "description": "API Endpoints for Voting"
+        }
+    ]
+}

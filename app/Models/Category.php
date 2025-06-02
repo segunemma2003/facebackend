@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class Category extends Model
 {
@@ -21,7 +22,8 @@ class Category extends Model
         'voting_ends_at',
         'color',
         'icon',
-        'image_url',
+        'featured_image', // New field for uploaded file
+        'image_url', // Keep for backward compatibility
         'is_active',
         'sort_order',
     ];
@@ -33,6 +35,25 @@ class Category extends Model
         'voting_ends_at' => 'datetime',
         'is_active' => 'boolean',
     ];
+
+    // Get image URL (checks both uploaded file and fallback URL)
+    public function getImageUrlAttribute()
+    {
+        if ($this->featured_image) {
+            return Storage::disk('public')->url($this->featured_image);
+        }
+        return $this->attributes['image_url'] ?? null;
+    }
+
+    public function getImageThumbAttribute()
+    {
+        if ($this->featured_image) {
+            // For now, return the same image. You can implement thumbnail generation if needed
+            return Storage::disk('public')->url($this->featured_image);
+        }
+        return $this->attributes['image_url'] ?? null;
+    }
+
 
     public function nominees(): HasMany
     {
