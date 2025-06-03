@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('image_url')->nullable();
             $table->boolean('is_active')->default(true);
             $table->integer('sort_order')->default(0);
-            $table->string('featured_image')->nullable()->after('icon');
+            $table->string('featured_image')->nullable();
             $table->timestamps();
         });
     }

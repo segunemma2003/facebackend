@@ -24,7 +24,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index('nominee_id');
-            $table->string('testimonial_image')->nullable()->after('content');
+            $table->string('testimonial_image')->nullable();
         });
     }
 

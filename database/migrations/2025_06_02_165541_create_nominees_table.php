@@ -26,9 +26,9 @@ return new class extends Migration
             $table->string('image_url')->nullable();
             $table->boolean('is_active')->default(true);
             $table->integer('sort_order')->default(0);
-             $table->string('profile_image')->nullable()->after('impact_summary');
-            $table->string('cover_image')->nullable()->after('profile_image');
-            $table->json('gallery_images')->nullable()->after('cover_image');
+             $table->string('profile_image')->nullable();
+            $table->string('cover_image')->nullable();
+            $table->json('gallery_images')->nullable();
             $table->timestamps();
             $table->index(['category_id', 'year']);
             $table->index(['is_winner', 'year']);
