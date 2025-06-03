@@ -1,0 +1,151 @@
+name: Deploy Laravel API to VPS
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, pdo_mysql, zip
+          coverage: none
+
+      - name: Copy .env
+        run: php -r "file_exists('.env') || copy('.env.example', '.env');"
+
+      - name: Install Dependencies
+        run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+      - name: Generate key
+        run: php artisan key:generate
+
+      - name: Directory Permissions
+        run: chmod -R 777 storage bootstrap/cache
+
+      - name: Run Tests
+        run: php artisan test
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            # Set variables
+            APP_DIR="/var/www/api.faceglobal-recognition.com"
+            REPO_URL="https://github.com/segunemma2003/facebackend.git"
+
+            # Create application directory if it doesn't exist
+            sudo mkdir -p $APP_DIR
+            sudo chown -R $USER:$USER $APP_DIR
+
+            # Navigate to app directory
+            cd $APP_DIR
+
+            # Check if this is first deployment
+            if [ ! -d ".git" ]; then
+              echo "🚀 First time deployment - Setting up application..."
+
+              # Clone repository
+              git clone $REPO_URL .
+
+              # Install PHP dependencies
+              composer install --no-dev --optimize-autoloader
+
+              # Copy environment file
+              cp .env.example .env
+
+              # Generate application key
+              php artisan key:generate
+
+              # Set up environment variables
+              sed -i "s/APP_NAME=Laravel/APP_NAME=\"Face Recognition API\"/" .env
+              sed -i "s/APP_ENV=local/APP_ENV=production/" .env
+              sed -i "s/APP_DEBUG=true/APP_DEBUG=false/" .env
+              sed -i "s/APP_URL=http:\/\/localhost/APP_URL=https:\/\/api.faceglobal-recognition.com/" .env
+
+              # Database configuration
+              sed -i "s/DB_CONNECTION=sqlite/DB_CONNECTION=mysql/" .env
+              sed -i "s/# DB_HOST=127.0.0.1/DB_HOST=127.0.0.1/" .env
+              sed -i "s/# DB_PORT=3306/DB_PORT=3306/" .env
+              sed -i "s/# DB_DATABASE=laravel/DB_DATABASE=${{ secrets.DB_NAME }}/" .env
+              sed -i "s/# DB_USERNAME=root/DB_USERNAME=${{ secrets.DB_USERNAME }}/" .env
+              sed -i "s/# DB_PASSWORD=/DB_PASSWORD=${{ secrets.DB_PASSWORD }}/" .env
+
+              # Set proper permissions
+              sudo chown -R www-data:www-data $APP_DIR
+              sudo chmod -R 755 $APP_DIR
+              sudo chmod -R 775 $APP_DIR/storage
+              sudo chmod -R 775 $APP_DIR/bootstrap/cache
+
+              # Create symbolic link for storage (only once)
+              php artisan storage:link
+
+              # Run database migrations
+              php artisan migrate --force
+
+              # Cache configuration for production
+              php artisan config:cache
+              php artisan route:cache
+              php artisan view:cache
+
+              echo "✅ First deployment completed successfully!"
+
+            else
+              echo "🔄 Updating existing deployment..."
+
+              # Pull latest changes
+              git pull origin main
+
+              # Install/update dependencies
+              composer install --no-dev --optimize-autoloader
+
+              # Run database migrations (if any)
+              php artisan migrate --force
+
+              # Clear and rebuild cache
+              php artisan config:clear
+              php artisan route:clear
+              php artisan view:clear
+              php artisan cache:clear
+
+              php artisan config:cache
+              php artisan route:cache
+              php artisan view:cache
+
+              # Set proper permissions
+              sudo chown -R www-data:www-data $APP_DIR
+              sudo chmod -R 755 $APP_DIR
+              sudo chmod -R 775 $APP_DIR/storage
+              sudo chmod -R 775 $APP_DIR/bootstrap/cache
+
+              echo "✅ Update deployment completed successfully!"
+            fi
+
+            # Restart web server (adjust based on your setup)
+            sudo systemctl reload nginx
+            # sudo systemctl restart apache2  # Use this if you're using Apache
+
+            echo "🎉 Deployment finished!"
+
+      - name: Notify Deployment Status
+        if: always()
+        run: |
+          if [ ${{ job.status }} == 'success' ]; then
+            echo "✅ Deployment successful to api.faceglobal-recognition.com"
+          else
+            echo "❌ Deployment failed"
+          fi
