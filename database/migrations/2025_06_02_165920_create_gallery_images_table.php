@@ -15,11 +15,11 @@ return new class extends Migration
             $table->id();
             $table->foreignId('gallery_event_id')->constrained()->cascadeOnDelete();
             $table->string('image_url');
-            $table->string('gallery_image')->nullable();
+            $table->string('gallery_image')->nullable(); // Removed duplicate
             $table->text('caption');
             $table->integer('sort_order')->default(0);
             $table->timestamps();
- $table->string('gallery_image')->nullable();
+
             $table->index('gallery_event_id');
         });
     }

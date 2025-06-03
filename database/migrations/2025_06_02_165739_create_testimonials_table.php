@@ -13,18 +13,17 @@ return new class extends Migration
     {
         Schema::create('testimonials', function (Blueprint $table) {
             $table->id();
-
-          $table->foreignId('nominee_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('nominee_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->string('role');
             $table->string('organization');
             $table->text('content');
             $table->string('image_url')->nullable();
+            $table->string('testimonial_image')->nullable(); // Moved to proper position
             $table->integer('sort_order')->default(0);
             $table->timestamps();
 
             $table->index('nominee_id');
-            $table->string('testimonial_image')->nullable();
         });
     }
 
