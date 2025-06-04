@@ -13,14 +13,15 @@ return new class extends Migration
     {
         Schema::create('past_winners', function (Blueprint $table) {
             $table->id();
-              $table->string('name');
+            $table->string('name');
             $table->string('organization');
             $table->string('category');
             $table->text('achievement');
-            $table->string('image_url');
+            $table->string('profile_image')->nullable(); // Uploaded file path
+            $table->string('image_url')->nullable(); // Fallback URL - made nullable
             $table->integer('year');
             $table->timestamps();
-$table->string('profile_image')->nullable();
+
             $table->index(['year', 'category']);
         });
     }

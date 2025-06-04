@@ -15,12 +15,13 @@ return new class extends Migration
             $table->id();
             $table->foreignId('nominee_id')->constrained()->cascadeOnDelete();
             $table->string('title');
-            $table->string('achievement_image')->nullable();
             $table->text('description');
-            $table->string('date'); // Year or specific date
-            $table->string('image_url')->nullable();
+            $table->date('date'); // Changed from string to date
+            $table->string('achievement_image')->nullable(); // Uploaded file path
+            $table->string('image_url')->nullable(); // Fallback URL
             $table->integer('sort_order')->default(0);
             $table->timestamps();
+
             $table->index('nominee_id');
         });
     }

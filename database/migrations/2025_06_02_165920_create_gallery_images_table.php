@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('gallery_images', function (Blueprint $table) {
             $table->id();
             $table->foreignId('gallery_event_id')->constrained()->cascadeOnDelete();
-            $table->string('image_url');
-            $table->string('gallery_image')->nullable(); // Removed duplicate
-            $table->text('caption');
+            $table->string('gallery_image')->nullable(); // Uploaded file path
+            $table->string('image_url')->nullable(); // Fallback URL - moved after gallery_image
+            $table->text('caption')->nullable(); // Made nullable since it might be empty
             $table->integer('sort_order')->default(0);
             $table->timestamps();
 

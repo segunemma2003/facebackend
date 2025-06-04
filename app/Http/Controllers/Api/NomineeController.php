@@ -108,6 +108,13 @@ class NomineeController extends Controller
 
         $orderBy = $request->get('order_by', 'votes');
         $orderDirection = $request->get('order_direction', 'desc');
+
+        // Validate order column exists
+        $allowedOrderColumns = ['votes', 'name', 'created_at', 'voting_percentage', 'organization'];
+        if (!in_array($orderBy, $allowedOrderColumns)) {
+            $orderBy = 'votes';
+        }
+
         $query->orderBy($orderBy, $orderDirection);
 
         $nominees = $query->get()->map(function ($nominee) {
@@ -117,7 +124,7 @@ class NomineeController extends Controller
                 'organization' => $nominee->organization,
                 'category' => $nominee->category->name,
                 'description' => $nominee->description,
-                'image_url' => $nominee->image_url,
+                'image_url' => $nominee->image_url, // This uses the accessor from model
                 'votes' => $nominee->votes,
                 'voting_percentage' => $nominee->voting_percentage,
                 'can_vote' => $nominee->can_vote,
@@ -153,10 +160,11 @@ class NomineeController extends Controller
                 'position' => $nominee->position,
                 'location' => $nominee->location,
                 'impact_summary' => $nominee->impact_summary,
-                'image_url' => $nominee->image_url,
-                'cover_image_url' => $nominee->cover_image_url,
+                'image_url' => $nominee->image_url, // Uses accessor
+                'cover_image_url' => $nominee->cover_image_url, // Uses accessor
                 'video_url' => $nominee->video_url,
                 'social_links' => $nominee->social_links,
+                'gallery_images' => $nominee->gallery_images_urls, // Uses accessor for full URLs
                 'votes' => $nominee->votes,
                 'voting_percentage' => $nominee->voting_percentage,
                 'can_vote' => $nominee->can_vote,
@@ -166,8 +174,8 @@ class NomineeController extends Controller
                         'id' => $achievement->id,
                         'title' => $achievement->title,
                         'description' => $achievement->description,
-                        'date' => $achievement->date,
-                        'image_url' => $achievement->image_url,
+                        'date' => $achievement->date->format('Y-m-d'), // Format date properly
+                        'image_url' => $achievement->image_url, // Uses accessor
                     ];
                 }),
                 'testimonials' => $nominee->testimonials->map(function ($testimonial) {
@@ -177,13 +185,12 @@ class NomineeController extends Controller
                         'role' => $testimonial->role,
                         'organization' => $testimonial->organization,
                         'content' => $testimonial->content,
-                        'image_url' => $testimonial->image_url,
+                        'image_url' => $testimonial->image_url, // Uses accessor
                     ];
                 }),
             ]
         ]);
     }
-
      /**
      * @OA\Get(
      *      path="/api/v1/nominees/trending",
@@ -212,7 +219,7 @@ class NomineeController extends Controller
      * )
      */
 
-    public function trending(): JsonResponse
+     public function trending(): JsonResponse
     {
         $trending = Nominee::with('category')
             ->active()
@@ -224,6 +231,8 @@ class NomineeController extends Controller
                 return [
                     'id' => $nominee->id,
                     'name' => $nominee->name,
+                    'organization' => $nominee->organization,
+                    'image_url' => $nominee->image_url, // Uses accessor
                     'category' => $nominee->category->name,
                     'votes' => $nominee->votes,
                     'voting_percentage' => $nominee->voting_percentage,

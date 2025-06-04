@@ -16,12 +16,16 @@ class Achievement extends Model
         'title',
         'description',
         'date',
-        'achievement_image', // New field for uploaded image
-        'image_url', // Keep for backward compatibility
+        'achievement_image', // Uploaded file path
+        'image_url', // Fallback URL
         'sort_order',
     ];
 
-    // Get image URL (checks both uploaded file and fallback URL)
+    protected $casts = [
+        'date' => 'date', // Cast as date
+    ];
+
+    // Get image URL (prioritize uploaded file over fallback URL)
     public function getImageUrlAttribute()
     {
         if ($this->achievement_image) {
@@ -29,6 +33,7 @@ class Achievement extends Model
         }
         return $this->attributes['image_url'] ?? null;
     }
+
     public function nominee(): BelongsTo
     {
         return $this->belongsTo(Nominee::class);

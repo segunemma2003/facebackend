@@ -12,20 +12,20 @@ class Nominee extends Model
 {
     use HasFactory;
 
-   protected $fillable = [
+    protected $fillable = [
         'category_id',
         'name',
         'organization',
-        'description',
-        'long_bio',
         'position',
         'location',
+        'description',
+        'long_bio',
         'impact_summary',
-        'profile_image', // New field for uploaded profile image
-        'cover_image', // New field for uploaded cover image
-        'gallery_images', // New field for uploaded gallery images (JSON array)
-        'image_url', // Keep for backward compatibility
-        'cover_image_url', // Keep for backward compatibility
+        'profile_image',
+        'cover_image',
+        'gallery_images',
+        'image_url',
+        'cover_image_url',
         'video_url',
         'social_links',
         'votes',
@@ -38,16 +38,19 @@ class Nominee extends Model
 
     protected $casts = [
         'social_links' => 'array',
-        'gallery_images' => 'array', // Cast gallery images as array
+        'gallery_images' => 'array',
         'can_vote' => 'boolean',
         'is_winner' => 'boolean',
         'is_active' => 'boolean',
         'voting_percentage' => 'decimal:2',
+        'votes' => 'integer',
+        'year' => 'integer',
     ];
 
     protected $appends = ['total_votes_count'];
 
-     public function getImageUrlAttribute()
+    // Image URL accessors - prioritize uploaded files over fallback URLs
+    public function getImageUrlAttribute()
     {
         if ($this->profile_image) {
             return Storage::disk('public')->url($this->profile_image);
@@ -65,6 +68,7 @@ class Nominee extends Model
 
     public function getProfileThumbAttribute()
     {
+        // For thumbnail - you can implement resizing logic here if needed
         if ($this->profile_image) {
             return Storage::disk('public')->url($this->profile_image);
         }
@@ -81,7 +85,7 @@ class Nominee extends Model
         return [];
     }
 
-
+    // Relationships
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
@@ -102,11 +106,13 @@ class Nominee extends Model
         return $this->hasMany(Vote::class);
     }
 
+    // Computed attributes
     public function getTotalVotesCountAttribute()
     {
         return $this->userVotes()->count();
     }
 
+    // Business logic methods
     public function updateVotingPercentage()
     {
         $categoryTotalVotes = $this->category->nominees()->sum('votes');
@@ -121,6 +127,18 @@ class Nominee extends Model
         return $this->userVotes()->where('ip_address', $ipAddress)->exists();
     }
 
+    public function incrementVotes(): void
+    {
+        $this->increment('votes');
+        $this->updateVotingPercentage();
+
+        // Update percentages for all nominees in this category
+        $this->category->nominees()->each(function ($nominee) {
+            $nominee->updateVotingPercentage();
+        });
+    }
+
+    // Scopes
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
@@ -140,5 +158,39 @@ class Nominee extends Model
     {
         return $query->where('category_id', $categoryId);
     }
-}
 
+    public function scopeCanVote($query)
+    {
+        return $query->where('can_vote', true);
+    }
+
+    public function scopeByYear($query, $year)
+    {
+        return $query->where('year', $year);
+    }
+
+    public function scopeTopVoted($query, $limit = 10)
+    {
+        return $query->orderBy('votes', 'desc')->limit($limit);
+    }
+
+    // Boot method for model events
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Set default year when creating
+        static::creating(function ($nominee) {
+            if (empty($nominee->year)) {
+                $nominee->year = date('Y');
+            }
+        });
+
+        // Update category voting percentages when nominee is updated
+        static::updated(function ($nominee) {
+            if ($nominee->wasChanged('votes')) {
+                $nominee->updateVotingPercentage();
+            }
+        });
+    }
+}

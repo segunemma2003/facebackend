@@ -24,10 +24,12 @@ class TopNominees extends BaseWidget
                     ->limit(10)
             )
             ->columns([
-                Tables\Columns\ImageColumn::make('image_url')
+                Tables\Columns\ImageColumn::make('profile_image') // Changed from 'image_url'
                     ->label('Photo')
+                    ->disk('public')
                     ->circular()
-                    ->size(40),
+                    ->size(40)
+                    ->defaultImageUrl(fn ($record) => $record->image_url), // Uses accessor as fallback
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('organization')

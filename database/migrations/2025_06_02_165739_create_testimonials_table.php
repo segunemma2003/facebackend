@@ -18,8 +18,8 @@ return new class extends Migration
             $table->string('role');
             $table->string('organization');
             $table->text('content');
-            $table->string('image_url')->nullable();
-            $table->string('testimonial_image')->nullable(); // Moved to proper position
+            $table->string('testimonial_image')->nullable(); // Uploaded file path
+            $table->string('image_url')->nullable(); // Fallback URL
             $table->integer('sort_order')->default(0);
             $table->timestamps();
 

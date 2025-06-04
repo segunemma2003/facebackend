@@ -15,11 +15,16 @@ class PastWinner extends Model
         'organization',
         'category',
         'achievement',
-        'profile_image', // New field for uploaded image
-        'image_url', // Keep for backward compatibility
+        'profile_image', // Uploaded file path
+        'image_url', // Fallback URL
         'year',
     ];
 
+    protected $casts = [
+        'year' => 'integer',
+    ];
+
+    // Get image URL (prioritize uploaded file over fallback URL)
     public function getImageUrlAttribute()
     {
         if ($this->profile_image) {

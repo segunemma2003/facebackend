@@ -152,12 +152,14 @@ class NomineeResource extends Resource
                                 Forms\Components\TextInput::make('votes')
                                     ->numeric()
                                     ->default(0)
-                                    ->disabled(),
+                                    ->disabled()
+                                    ->dehydrated(false), // Don't save this field
                                 Forms\Components\TextInput::make('voting_percentage')
                                     ->label('Voting Percentage')
                                     ->numeric()
                                     ->suffix('%')
-                                    ->disabled(),
+                                    ->disabled()
+                                    ->dehydrated(false), // Don't save this field
                                 Forms\Components\Toggle::make('can_vote')
                                     ->label('Can Receive Votes')
                                     ->default(true),
@@ -181,10 +183,12 @@ class NomineeResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\ImageColumn::make('image_url')
+                Tables\Columns\ImageColumn::make('profile_image') // Changed from 'image_url'
                     ->label('Photo')
+                    ->disk('public')
                     ->circular()
-                    ->size(50),
+                    ->size(50)
+                    ->defaultImageUrl(fn ($record) => $record->image_url), // Fallback to accessor
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable(),

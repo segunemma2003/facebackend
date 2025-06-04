@@ -16,7 +16,7 @@ class ImagesRelationManager extends RelationManager
     {
         return $form
             ->schema([
-                 Forms\Components\FileUpload::make('gallery_image')
+                Forms\Components\FileUpload::make('gallery_image')
                     ->label('Gallery Image')
                     ->image()
                     ->imageEditor()
@@ -46,11 +46,11 @@ class ImagesRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('caption')
             ->columns([
-                 Tables\Columns\ImageColumn::make('gallery_image')
+                Tables\Columns\ImageColumn::make('gallery_image') // Changed from 'gallery_image'
                     ->label('Image')
                     ->disk('public')
                     ->size(60)
-                    ->defaultImageUrl(fn ($record) => $record->image_url),
+                    ->defaultImageUrl(fn ($record) => $record->image_url), // Uses accessor as fallback
                 Tables\Columns\TextColumn::make('caption')
                     ->limit(50)
                     ->searchable(),

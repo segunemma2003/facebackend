@@ -33,10 +33,31 @@ class PastWinnerResource extends Resource
                 Forms\Components\Textarea::make('achievement')
                     ->required()
                     ->columnSpanFull(),
+
+                // Add file upload for profile image
+                Forms\Components\FileUpload::make('profile_image')
+                    ->label('Profile Image')
+                    ->image()
+                    ->imageEditor()
+                    ->imageEditorAspectRatios([
+                        '1:1',
+                        '4:3',
+                        '16:9',
+                    ])
+                    ->directory('past-winners')
+                    ->disk('public')
+                    ->visibility('public')
+                    ->maxSize(3072) // 3MB
+                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+                    ->helperText('Upload a profile photo for the past winner')
+                    ->columnSpanFull(),
+
                 Forms\Components\TextInput::make('image_url')
-                    ->label('Image URL')
+                    ->label('Fallback Image URL')
                     ->url()
-                    ->required(),
+                    ->helperText('Only used if no image is uploaded above')
+                    ->columnSpanFull(),
+
                 Forms\Components\TextInput::make('year')
                     ->numeric()
                     ->required()
@@ -48,10 +69,12 @@ class PastWinnerResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\ImageColumn::make('image_url')
+                Tables\Columns\ImageColumn::make('profile_image') // Changed from 'image_url'
                     ->label('Photo')
+                    ->disk('public')
                     ->circular()
-                    ->size(60),
+                    ->size(60)
+                    ->defaultImageUrl(fn ($record) => $record->image_url), // Fallback to accessor
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable(),

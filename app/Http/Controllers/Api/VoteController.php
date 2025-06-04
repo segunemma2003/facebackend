@@ -78,7 +78,7 @@ class VoteController extends Controller
     public function vote(Request $request, Nominee $nominee): JsonResponse
     {
         $request->validate([
-            'ip_address' => 'required|ip',
+            'ip_address' => 'nullable|ip', // Made nullable since we can use request IP
         ]);
 
         $ipAddress = $request->ip_address ?? $request->ip();
@@ -111,11 +111,8 @@ class VoteController extends Controller
             'user_agent' => $request->userAgent(),
         ]);
 
-        // Update nominee vote count
-        $nominee->increment('votes');
-
-        // Update voting percentages for all nominees in this category
-        $this->updateCategoryVotingPercentages($nominee->category_id);
+        // Use the model method to increment votes and update percentages
+        $nominee->incrementVotes();
 
         return response()->json([
             'success' => true,
@@ -128,7 +125,7 @@ class VoteController extends Controller
         ]);
     }
 
-    public function hasVoted(Request $request, Nominee $nominee): JsonResponse
+   public function hasVoted(Request $request, Nominee $nominee): JsonResponse
     {
         $ipAddress = $request->ip_address ?? $request->ip();
         $hasVoted = $nominee->hasUserVoted($ipAddress);
@@ -141,8 +138,7 @@ class VoteController extends Controller
             ]
         ]);
     }
-
-    public function categoryVotes(Request $request): JsonResponse
+   public function categoryVotes(Request $request): JsonResponse
     {
         $ipAddress = $request->ip_address ?? $request->ip();
 
@@ -164,7 +160,6 @@ class VoteController extends Controller
             'data' => $votedNominees
         ]);
     }
-
     private function updateCategoryVotingPercentages(int $categoryId): void
     {
         $nominees = Nominee::where('category_id', $categoryId)->get();

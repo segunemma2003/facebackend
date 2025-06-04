@@ -36,12 +36,13 @@ class GalleryController extends Controller
                     'year' => $event->year,
                     'is_featured' => $event->is_featured,
                     'image_count' => $event->images->count(),
-                    'featured_image' => $event->images->first()?->image_url,
+                    'featured_image' => $event->images->first()?->image_url, // Uses accessor
                     'images' => $event->images->map(function ($image) {
                         return [
                             'id' => $image->id,
-                            'image_url' => $image->image_url,
+                            'image_url' => $image->image_url, // Uses accessor
                             'caption' => $image->caption,
+                            'sort_order' => $image->sort_order,
                         ];
                     }),
                 ];
@@ -73,8 +74,9 @@ class GalleryController extends Controller
                 'images' => $galleryEvent->images->map(function ($image) {
                     return [
                         'id' => $image->id,
-                        'image_url' => $image->image_url,
+                        'image_url' => $image->image_url, // Uses accessor
                         'caption' => $image->caption,
+                        'sort_order' => $image->sort_order,
                     ];
                 }),
             ]
