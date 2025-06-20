@@ -1,48 +1,50 @@
 <?php
-// app/Filament/Resources/HomepageContentResource.php
+
 
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\HomepageContentResource\Pages;
-use App\Models\PageContent;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 
-class HomepageContentResource extends Resource
+class HomepageContentResource extends BasePageContentResource
 {
-    protected static ?string $model = PageContent::class;
-
     protected static ?string $navigationIcon = 'heroicon-o-home';
 
     protected static ?string $navigationLabel = 'Homepage Content';
 
-    protected static ?string $navigationGroup = 'Content Management';
-
     protected static ?int $navigationSort = 1;
 
+    protected static function getPageName(): string
+    {
+        return 'homepage';
+    }
+
+    protected static function getPageSections(): array
+    {
+        return [
+            'hero' => 'Hero Section',
+            'about' => 'About Section',
+            'approach' => 'Approach Section',
+            'upcoming_categories' => 'Upcoming Categories',
+            'award_ceremony' => 'Award Ceremony Section',
+            'past_winners' => 'Past Winners Section',
+            'gallery' => 'Gallery Section'
+        ];
+    }
+
+    // Override the form to add custom key options based on section
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\Hidden::make('page')
-                    ->default('homepage'),
+                    ->default(static::getPageName()),
 
                 Forms\Components\Section::make('Content Details')
                     ->schema([
                         Forms\Components\Select::make('section')
-                            ->options([
-                                'hero' => 'Hero Section',
-                                'about' => 'About Section',
-                                'approach' => 'Approach Section',
-                                'upcoming_categories' => 'Upcoming Categories',
-                                'award_ceremony' => 'Award Ceremony Section',
-                                'past_winners' => 'Past Winners Section',
-                                'gallery' => 'Gallery Section'
-                            ])
+                            ->options(static::getPageSections())
                             ->required()
                             ->live(),
 
@@ -155,94 +157,6 @@ class HomepageContentResource extends Resource
             ]);
     }
 
-    public static function table(Table $table): Table
-    {
-        return $table
-            ->modifyQueryUsing(fn (Builder $query) => $query->where('page', 'homepage'))
-            ->columns([
-                Tables\Columns\TextColumn::make('section')
-                    ->badge()
-                    ->color('primary')
-                    ->formatStateUsing(fn ($state) => match($state) {
-                        'hero' => 'Hero Section',
-                        'about' => 'About Section',
-                        'approach' => 'Approach Section',
-                        'upcoming_categories' => 'Upcoming Categories',
-                        'award_ceremony' => 'Award Ceremony',
-                        'past_winners' => 'Past Winners',
-                        'gallery' => 'Gallery',
-                        default => $state
-                    }),
-
-                Tables\Columns\TextColumn::make('key')
-                    ->searchable()
-                    ->sortable(),
-
-                Tables\Columns\TextColumn::make('type')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'text' => 'gray',
-                        'html' => 'info',
-                        'image' => 'success',
-                        'json' => 'warning',
-                        default => 'gray'
-                    }),
-
-                Tables\Columns\TextColumn::make('content')
-                    ->limit(50)
-                    ->wrap()
-                    ->formatStateUsing(function ($state, $record) {
-                        if ($record->type === 'image') {
-                            return 'Image: ' . basename($state);
-                        }
-                        return $state;
-                    }),
-
-                Tables\Columns\TextColumn::make('sort_order')
-                    ->sortable(),
-
-                Tables\Columns\IconColumn::make('is_active')
-                    ->boolean(),
-
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable(),
-            ])
-            ->filters([
-                Tables\Filters\SelectFilter::make('section')
-                    ->options([
-                        'hero' => 'Hero Section',
-                        'about' => 'About Section',
-                        'approach' => 'Approach Section',
-                        'upcoming_categories' => 'Upcoming Categories',
-                        'award_ceremony' => 'Award Ceremony',
-                        'past_winners' => 'Past Winners',
-                        'gallery' => 'Gallery'
-                    ]),
-
-                Tables\Filters\SelectFilter::make('type')
-                    ->options([
-                        'text' => 'Text',
-                        'html' => 'HTML',
-                        'image' => 'Image',
-                        'json' => 'JSON Data',
-                    ]),
-
-                Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Active'),
-            ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ])
-            ->defaultSort('section');
-    }
-
     public static function getPages(): array
     {
         return [
@@ -250,10 +164,5 @@ class HomepageContentResource extends Resource
             'create' => Pages\CreateHomepageContent::route('/create'),
             'edit' => Pages\EditHomepageContent::route('/{record}/edit'),
         ];
-    }
-
-    public static function getGloballySearchableAttributes(): array
-    {
-        return ['key', 'content'];
     }
 }

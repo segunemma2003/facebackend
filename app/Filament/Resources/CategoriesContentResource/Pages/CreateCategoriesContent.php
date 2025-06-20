@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\CategoriesContentResource\Pages;
 
 use App\Filament\Resources\CategoriesContentResource;
-use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateCategoriesContent extends CreateRecord

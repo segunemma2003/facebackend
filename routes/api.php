@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\NomineeController;
 use App\Http\Controllers\Api\VoteController;
 use App\Http\Controllers\Api\PastWinnerController;
 use App\Http\Controllers\Api\GalleryController;
+use App\Http\Controllers\Api\PageContentController;
 use App\Http\Controllers\Api\RegistrationController;
 use App\Http\Controllers\Api\SettingsController;
 
@@ -62,6 +63,16 @@ Route::prefix('v1')->group(function () {
     Route::prefix('settings')->group(function () {
         Route::get('/', [SettingsController::class, 'index']);
         Route::get('/{key}', [SettingsController::class, 'show']);
+    });
+
+
+    // Page Content
+    Route::prefix('content')->group(function () {
+        Route::get('/', [PageContentController::class, 'index']);
+        Route::get('/pages', [PageContentController::class, 'pages']);
+        Route::get('/{page}', [PageContentController::class, 'show']);
+        Route::get('/{page}/{section}', [PageContentController::class, 'section']);
+        Route::get('/{page}/{section}/{key}', [PageContentController::class, 'item']);
     });
 
     // Health check

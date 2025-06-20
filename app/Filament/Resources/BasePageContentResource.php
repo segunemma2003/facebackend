@@ -13,7 +13,7 @@ abstract class BasePageContentResource extends Resource
 {
     protected static ?string $model = PageContent::class;
 
-    protected static ?string $navigationGroup = 'Content Management';
+    protected static ?string $navigationGroup = 'Content Managements';
 
     // Each child class should define this
     abstract protected static function getPageName(): string;

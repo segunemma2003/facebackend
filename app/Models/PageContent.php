@@ -91,7 +91,7 @@ class PageContent extends Model
         return static::getPageStructure()[$page] ?? [];
     }
 
-    // Accessor for getting content based on type
+    // // Accessor for getting content based on type
     protected function content(): Attribute
     {
         return Attribute::make(
@@ -105,18 +105,18 @@ class PageContent extends Model
         );
     }
 
-    // Scope for getting page content
-    public function scopeForPage($query, $page)
-    {
-        return $query->where('page', $page)->where('is_active', true);
-    }
+    // // Scope for getting page content
+    // public function scopeForPage($query, $page)
+    // {
+    //     return $query->where('page', $page)->where('is_active', true);
+    // }
 
     public function scopeForSection($query, $section)
     {
         return $query->where('section', $section);
     }
 
-    // Helper method to get content by key
+    // // Helper method to get content by key
     public static function getContent($page, $section, $key, $default = null)
     {
         $content = static::forPage($page)
@@ -127,7 +127,7 @@ class PageContent extends Model
         return $content ? $content->content : $default;
     }
 
-    // Helper method to get all content for a section
+    // // Helper method to get all content for a section
     public static function getSectionContent($page, $section)
     {
         return static::forPage($page)

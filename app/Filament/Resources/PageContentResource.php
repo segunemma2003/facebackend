@@ -1,5 +1,5 @@
 <?php
-// app/Filament/Resources/PageContentResource.php
+
 
 namespace App\Filament\Resources;
 
@@ -18,9 +18,11 @@ class PageContentResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
-    protected static ?string $navigationLabel = 'Page Content';
+    protected static ?string $navigationLabel = 'All Page Content';
 
     protected static ?string $navigationGroup = 'Content Management';
+
+    protected static ?int $navigationSort = 10; // Put it at the end
 
     public static function form(Form $form): Form
     {
@@ -30,25 +32,75 @@ class PageContentResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('page')
                             ->options([
-                                'home' => 'Homepage',
+                                'homepage' => 'Homepage',
                                 'about' => 'About Page',
+                                'approach' => 'Our Approach Page',
+                                'categories' => 'Categories Page',
+                                'nominees' => 'Current Nominees Page',
+                                'past_winners' => 'Past Winners Page',
+                                'gallery' => 'Gallery Page',
                                 'contact' => 'Contact Page',
+                                'footer' => 'Footer Content',
                             ])
                             ->required()
                             ->live(),
 
                         Forms\Components\Select::make('section')
                             ->options(fn (Forms\Get $get) => match ($get('page')) {
-                                'home' => [
+                                'homepage' => [
                                     'hero' => 'Hero Section',
                                     'about' => 'About Section',
-                                    'registration' => 'Registration Section',
-                                    'statistics' => 'Statistics',
+                                    'approach' => 'Approach Section',
+                                    'upcoming_categories' => 'Upcoming Categories',
+                                    'award_ceremony' => 'Award Ceremony',
+                                    'past_winners' => 'Past Winners',
+                                    'gallery' => 'Gallery'
                                 ],
                                 'about' => [
                                     'hero' => 'Hero Section',
-                                    'content' => 'Main Content',
+                                    'story' => 'Our Story',
                                     'team' => 'Team Section',
+                                    'mission' => 'Mission & Vision',
+                                    'contact_info' => 'Contact Information'
+                                ],
+                                'approach' => [
+                                    'hero' => 'Hero Section',
+                                    'methodology' => 'Our Methodology',
+                                    'process' => 'Our Process',
+                                    'values' => 'Our Values'
+                                ],
+                                'categories' => [
+                                    'hero' => 'Hero Section',
+                                    'introduction' => 'Introduction',
+                                    'content' => 'Main Content'
+                                ],
+                                'nominees' => [
+                                    'hero' => 'Hero Section',
+                                    'filters' => 'Filter Section',
+                                    'content' => 'Main Content',
+                                    'voting_info' => 'Voting Information'
+                                ],
+                                'past_winners' => [
+                                    'hero' => 'Hero Section',
+                                    'introduction' => 'Introduction',
+                                    'content' => 'Main Content'
+                                ],
+                                'gallery' => [
+                                    'hero' => 'Hero Section',
+                                    'introduction' => 'Introduction',
+                                    'content' => 'Main Content'
+                                ],
+                                'contact' => [
+                                    'hero' => 'Hero Section',
+                                    'contact_form' => 'Contact Form',
+                                    'contact_info' => 'Contact Information',
+                                    'map' => 'Map Section'
+                                ],
+                                'footer' => [
+                                    'links' => 'Footer Links',
+                                    'social' => 'Social Media',
+                                    'contact' => 'Contact Information',
+                                    'copyright' => 'Copyright & Legal'
                                 ],
                                 default => []
                             })
@@ -120,9 +172,15 @@ class PageContentResource extends Resource
                 Tables\Columns\TextColumn::make('page')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'home' => 'success',
+                        'homepage' => 'success',
                         'about' => 'info',
+                        'approach' => 'warning',
+                        'categories' => 'danger',
+                        'nominees' => 'primary',
+                        'past_winners' => 'gray',
+                        'gallery' => 'success',
                         'contact' => 'warning',
+                        'footer' => 'gray',
                         default => 'gray'
                     }),
 
@@ -167,9 +225,15 @@ class PageContentResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('page')
                     ->options([
-                        'home' => 'Homepage',
+                        'homepage' => 'Homepage',
                         'about' => 'About Page',
+                        'approach' => 'Our Approach Page',
+                        'categories' => 'Categories Page',
+                        'nominees' => 'Current Nominees Page',
+                        'past_winners' => 'Past Winners Page',
+                        'gallery' => 'Gallery Page',
                         'contact' => 'Contact Page',
+                        'footer' => 'Footer Content',
                     ]),
 
                 Tables\Filters\SelectFilter::make('section'),
