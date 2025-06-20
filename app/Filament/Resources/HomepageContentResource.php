@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\HomepageContentResource\Pages;
@@ -120,26 +119,39 @@ class HomepageContentResource extends BasePageContentResource
                 Forms\Components\Section::make('Content')
                     ->schema([
                         // Text content
-                        Forms\Components\Textarea::make('content')
+                        Forms\Components\Textarea::make('text_content')
+                            ->label('Text Content')
                             ->rows(3)
                             ->visible(fn (Forms\Get $get) => $get('type') === 'text')
-                            ->required(fn (Forms\Get $get) => $get('type') === 'text'),
+                            ->required(fn (Forms\Get $get) => $get('type') === 'text')
+                            ->afterStateHydrated(fn ($component, $state, $record) =>
+                                $component->state($record?->content ?? $state))
+                            ->dehydrateStateUsing(fn ($state, $record) => $state),
 
                         // HTML content
-                        Forms\Components\RichEditor::make('content')
+                        Forms\Components\RichEditor::make('html_content')
+                            ->label('HTML Content')
                             ->visible(fn (Forms\Get $get) => $get('type') === 'html')
-                            ->required(fn (Forms\Get $get) => $get('type') === 'html'),
+                            ->required(fn (Forms\Get $get) => $get('type') === 'html')
+                            ->afterStateHydrated(fn ($component, $state, $record) =>
+                                $component->state($record?->content ?? $state))
+                            ->dehydrateStateUsing(fn ($state, $record) => $state),
 
                         // Image upload
-                        Forms\Components\FileUpload::make('content')
+                        Forms\Components\FileUpload::make('image_content')
+                            ->label('Image')
                             ->image()
                             ->directory('homepage')
                             ->visibility('public')
                             ->visible(fn (Forms\Get $get) => $get('type') === 'image')
-                            ->required(fn (Forms\Get $get) => $get('type') === 'image'),
+                            ->required(fn (Forms\Get $get) => $get('type') === 'image')
+                            ->afterStateHydrated(fn ($component, $state, $record) =>
+                                $component->state($record?->content ?? $state))
+                            ->dehydrateStateUsing(fn ($state, $record) => $state),
 
-                        // JSON content with examples
-                        Forms\Components\Textarea::make('content')
+                        // JSON content with examples and proper handling
+                        Forms\Components\Textarea::make('json_content')
+                            ->label('JSON Content')
                             ->rows(8)
                             ->helperText(fn (Forms\Get $get) => match ($get('key')) {
                                 'face_meanings' => 'Format: [{"letter":"F","word":"Focus","description":"..."},...]',
@@ -148,7 +160,24 @@ class HomepageContentResource extends BasePageContentResource
                                 default => 'Enter valid JSON data'
                             })
                             ->visible(fn (Forms\Get $get) => $get('type') === 'json')
-                            ->required(fn (Forms\Get $get) => $get('type') === 'json'),
+                            ->required(fn (Forms\Get $get) => $get('type') === 'json')
+                            // Load from content field and format as JSON string
+                            ->afterStateHydrated(function ($component, $state, $record) {
+                                $content = $record?->content ?? $state;
+                                if (is_array($content)) {
+                                    $component->state(json_encode($content, JSON_PRETTY_PRINT));
+                                } else {
+                                    $component->state($content);
+                                }
+                            })
+                            // Convert JSON string back to array for storage
+                            ->dehydrateStateUsing(function ($state) {
+                                if (is_string($state)) {
+                                    $decoded = json_decode($state, true);
+                                    return $decoded !== null ? $decoded : $state;
+                                }
+                                return $state;
+                            }),
 
                         // Meta data
                         Forms\Components\KeyValue::make('meta')
