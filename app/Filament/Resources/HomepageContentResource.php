@@ -299,186 +299,187 @@ class HomepageContentResource extends BasePageContentResource
                             ->helperText('Uncheck to hide this content from the frontend'),
                     ]),
 
-               Forms\Components\Section::make('Content')
-                    ->schema([
-                        // Hidden field that actually stores the data
-                        Forms\Components\Hidden::make('content'),
 
-                        // Text content
-                        Forms\Components\Textarea::make('text_input')
-                            ->label('Text Content')
-                            ->rows(3)
-                            ->visible(fn (Forms\Get $get) => $get('type') === 'text')
-                            ->required(fn (Forms\Get $get) => $get('type') === 'text')
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state))
-                            ->afterStateHydrated(fn ($component, $state, $record) =>
-                                $component->state($record && $record->type === 'text' ? $record->getRawOriginal('content') : null))
-                            ->dehydrated(false),
+Forms\Components\Section::make('Content')
+    ->schema([
+        // Hidden field that actually stores the data
+        Forms\Components\Hidden::make('content'),
 
-                        // HTML content
-                        Forms\Components\RichEditor::make('html_input')
-                            ->label('HTML Content')
-                            ->toolbarButtons([
-                                'blockquote', 'bold', 'bulletList', 'codeBlock', 'h2', 'h3',
-                                'italic', 'link', 'orderedList', 'redo', 'strike', 'underline', 'undo',
-                            ])
-                            ->visible(fn (Forms\Get $get) => $get('type') === 'html')
-                            ->required(fn (Forms\Get $get) => $get('type') === 'html')
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state))
-                            ->afterStateHydrated(fn ($component, $state, $record) =>
-                                $component->state($record && $record->type === 'html' ? $record->getRawOriginal('content') : null))
-                            ->dehydrated(false),
+        // Text content
+        Forms\Components\Textarea::make('text_input')
+            ->label('Text Content')
+            ->rows(3)
+            ->visible(fn (Forms\Get $get) => $get('type') === 'text')
+            ->required(fn (Forms\Get $get) => $get('type') === 'text')
+            ->live(onBlur: true)
+            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state))
+            ->afterStateHydrated(fn ($component, $state, $record) =>
+                $component->state($record && $record->type === 'text' ? $record->getRawOriginal('content') : null))
+            ->dehydrated(false),
 
-                        // URL content
-                        Forms\Components\TextInput::make('url_input')
-                            ->label('URL')
-                            ->url()
-                            ->visible(fn (Forms\Get $get) => $get('type') === 'url')
-                            ->required(fn (Forms\Get $get) => $get('type') === 'url')
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state))
-                            ->afterStateHydrated(fn ($component, $state, $record) =>
-                                $component->state($record && $record->type === 'url' ? $record->getRawOriginal('content') : null))
-                            ->dehydrated(false),
+        // HTML content
+        Forms\Components\RichEditor::make('html_input')
+            ->label('HTML Content')
+            ->toolbarButtons([
+                'blockquote', 'bold', 'bulletList', 'codeBlock', 'h2', 'h3',
+                'italic', 'link', 'orderedList', 'redo', 'strike', 'underline', 'undo',
+            ])
+            ->visible(fn (Forms\Get $get) => $get('type') === 'html')
+            ->required(fn (Forms\Get $get) => $get('type') === 'html')
+            ->live(onBlur: true)
+            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state))
+            ->afterStateHydrated(fn ($component, $state, $record) =>
+                $component->state($record && $record->type === 'html' ? $record->getRawOriginal('content') : null))
+            ->dehydrated(false),
 
-                        // Number content
-                        Forms\Components\TextInput::make('number_input')
-                            ->label('Number')
-                            ->numeric()
-                            ->visible(fn (Forms\Get $get) => $get('type') === 'number')
-                            ->required(fn (Forms\Get $get) => $get('type') === 'number')
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state))
-                            ->afterStateHydrated(fn ($component, $state, $record) =>
-                                $component->state($record && $record->type === 'number' ? $record->getRawOriginal('content') : null))
-                            ->dehydrated(false),
+        // URL content
+        Forms\Components\TextInput::make('url_input')
+            ->label('URL')
+            ->url()
+            ->visible(fn (Forms\Get $get) => $get('type') === 'url')
+            ->required(fn (Forms\Get $get) => $get('type') === 'url')
+            ->live(onBlur: true)
+            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state))
+            ->afterStateHydrated(fn ($component, $state, $record) =>
+                $component->state($record && $record->type === 'url' ? $record->getRawOriginal('content') : null))
+            ->dehydrated(false),
 
-                        // Boolean content
-                        Forms\Components\Toggle::make('boolean_input')
-                            ->label('Boolean Value')
-                            ->visible(fn (Forms\Get $get) => $get('type') === 'boolean')
-                            ->live()
-                            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state ? 'true' : 'false'))
-                            ->afterStateHydrated(fn ($component, $state, $record) =>
-                                $component->state($record && $record->type === 'boolean' ?
-                                    filter_var($record->getRawOriginal('content'), FILTER_VALIDATE_BOOLEAN) : false))
-                            ->dehydrated(false),
+        // Number content
+        Forms\Components\TextInput::make('number_input')
+            ->label('Number')
+            ->numeric()
+            ->visible(fn (Forms\Get $get) => $get('type') === 'number')
+            ->required(fn (Forms\Get $get) => $get('type') === 'number')
+            ->live(onBlur: true)
+            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state))
+            ->afterStateHydrated(fn ($component, $state, $record) =>
+                $component->state($record && $record->type === 'number' ? $record->getRawOriginal('content') : null))
+            ->dehydrated(false),
 
-                        // Image upload - using a different field name
-                        Forms\Components\FileUpload::make('image_file')
-                            ->label('Image Upload')
-                            ->image()
-                            ->directory('homepage')
-                            ->disk('public')
-                            ->visibility('public')
-                            ->imageEditor()
-                            ->imageEditorAspectRatios(['16:9', '4:3', '1:1'])
-                            ->visible(fn (Forms\Get $get) => $get('type') === 'image')
-                            ->required(fn (Forms\Get $get) => $get('type') === 'image')
-                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
-                            ->maxSize(5120)
-                            ->multiple(false)
-                            ->live()
-                            ->afterStateUpdated(function ($state, Forms\Set $set) {
-                                // When file is uploaded, update the content field
-                                if ($state) {
-                                    // Filament returns array even for single files
-                                    $filePath = is_array($state) ? $state[0] : $state;
-                                    $set('content', $filePath);
-                                } else {
-                                    $set('content', null);
-                                }
-                            })
-                            ->afterStateHydrated(function ($component, $state, $record) {
-                                if (!$record || $record->type !== 'image') {
-                                    $component->state([]);
-                                    return;
-                                }
+        // Boolean content
+        Forms\Components\Toggle::make('boolean_input')
+            ->label('Boolean Value')
+            ->visible(fn (Forms\Get $get) => $get('type') === 'boolean')
+            ->live()
+            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state ? 'true' : 'false'))
+            ->afterStateHydrated(fn ($component, $state, $record) =>
+                $component->state($record && $record->type === 'boolean' ?
+                    filter_var($record->getRawOriginal('content'), FILTER_VALIDATE_BOOLEAN) : false))
+            ->dehydrated(false),
 
-                                $content = $record->getRawOriginal('content');
+        // Image upload - using a different field name
+        Forms\Components\FileUpload::make('image_file')
+            ->label('Image Upload')
+            ->image()
+            ->directory('homepage')
+            ->disk('public')
+            ->visibility('public')
+            ->imageEditor()
+            ->imageEditorAspectRatios(['16:9', '4:3', '1:1'])
+            ->visible(fn (Forms\Get $get) => $get('type') === 'image')
+            ->required(fn (Forms\Get $get) => $get('type') === 'image')
+            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+            ->maxSize(5120)
+            ->multiple(false)
+            ->live()
+            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                // When file is uploaded, update the content field
+                if ($state) {
+                    // Filament returns array even for single files
+                    $filePath = is_array($state) ? $state[0] : $state;
+                    $set('content', $filePath);
+                } else {
+                    $set('content', null);
+                }
+            })
+            ->afterStateHydrated(function ($component, $state, $record) {
+                if (!$record || $record->type !== 'image') {
+                    $component->state([]);
+                    return;
+                }
 
-                                if (!$content) {
-                                    $component->state([]);
-                                    return;
-                                }
+                $content = $record->getRawOriginal('content');
 
-                                // Extract the actual file path from various formats
-                                $filePath = null;
+                if (!$content) {
+                    $component->state([]);
+                    return;
+                }
 
-                                if (is_string($content)) {
-                                    if (str_starts_with($content, '{')) {
-                                        // JSON object format
-                                        $decoded = json_decode($content, true);
-                                        if ($decoded && is_array($decoded)) {
-                                            $filePath = array_values($decoded)[0] ?? null;
-                                        }
-                                    } elseif (str_starts_with($content, '[')) {
-                                        // JSON array format
-                                        $decoded = json_decode($content, true);
-                                        if ($decoded && is_array($decoded) && !empty($decoded)) {
-                                            $filePath = $decoded[0];
-                                        }
-                                    } else {
-                                        // Direct file path
-                                        $filePath = $content;
-                                    }
-                                }
+                // Extract the actual file path from various formats
+                $filePath = null;
 
-                                // FileUpload component expects an array, even for single files
-                                $component->state($filePath ? [$filePath] : []);
-                            })
-                            ->dehydrated(false),
+                if (is_string($content)) {
+                    if (str_starts_with($content, '{')) {
+                        // JSON object format
+                        $decoded = json_decode($content, true);
+                        if ($decoded && is_array($decoded)) {
+                            $filePath = array_values($decoded)[0] ?? null;
+                        }
+                    } elseif (str_starts_with($content, '[')) {
+                        // JSON array format
+                        $decoded = json_decode($content, true);
+                        if ($decoded && is_array($decoded) && !empty($decoded)) {
+                            $filePath = $decoded[0];
+                        }
+                    } else {
+                        // Direct file path
+                        $filePath = $content;
+                    }
+                }
+
+                // FileUpload component expects an array, even for single files
+                $component->state($filePath ? [$filePath] : []);
+            })
+            ->dehydrated(false),
 
 
 
-                        // JSON content
-                        Forms\Components\Textarea::make('json_input')
-                            ->label('JSON Content')
-                            ->rows(8)
-                            ->visible(fn (Forms\Get $get) => $get('type') === 'json')
-                            ->required(fn (Forms\Get $get) => $get('type') === 'json')
-                            ->helperText('Enter valid JSON data')
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state))
-                            ->afterStateHydrated(function ($component, $state, $record) {
-                                if (!$record || $record->type !== 'json') {
-                                    return;
-                                }
+        // JSON content
+        Forms\Components\Textarea::make('json_input')
+            ->label('JSON Content')
+            ->rows(8)
+            ->visible(fn (Forms\Get $get) => $get('type') === 'json')
+            ->required(fn (Forms\Get $get) => $get('type') === 'json')
+            ->helperText('Enter valid JSON data')
+            ->live(onBlur: true)
+            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state))
+            ->afterStateHydrated(function ($component, $state, $record) {
+                if (!$record || $record->type !== 'json') {
+                    return;
+                }
 
-                                $content = $record->getRawOriginal('content');
-                                if (is_string($content)) {
-                                    $decoded = json_decode($content, true);
-                                    if ($decoded !== null) {
-                                        $component->state(json_encode($decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-                                    } else {
-                                        $component->state($content);
-                                    }
-                                } else {
-                                    $component->state('{}');
-                                }
-                            })
-                            ->rules([
-                                fn (Forms\Get $get) => $get('type') === 'json' ? function ($attribute, $value, $fail) {
-                                    if (!empty($value)) {
-                                        json_decode($value);
-                                        if (json_last_error() !== JSON_ERROR_NONE) {
-                                            $fail('The content must be valid JSON: ' . json_last_error_msg());
-                                        }
-                                    }
-                                } : '',
-                            ])
-                            ->dehydrated(false),
+                $content = $record->getRawOriginal('content');
+                if (is_string($content)) {
+                    $decoded = json_decode($content, true);
+                    if ($decoded !== null) {
+                        $component->state(json_encode($decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+                    } else {
+                        $component->state($content);
+                    }
+                } else {
+                    $component->state('{}');
+                }
+            })
+            ->rules([
+                fn (Forms\Get $get) => $get('type') === 'json' ? function ($attribute, $value, $fail) {
+                    if (!empty($value)) {
+                        json_decode($value);
+                        if (json_last_error() !== JSON_ERROR_NONE) {
+                            $fail('The content must be valid JSON: ' . json_last_error_msg());
+                        }
+                    }
+                } : '',
+            ])
+            ->dehydrated(false),
 
-                        // Meta data
-                        Forms\Components\KeyValue::make('meta')
-                            ->helperText('Additional metadata (alt text for images, captions, etc.)')
-                            ->addable(true)
-                            ->deletable(true)
-                            ->keyLabel('Property')
-                            ->valueLabel('Value'),
-                    ]),
+        // Meta data
+        Forms\Components\KeyValue::make('meta')
+            ->helperText('Additional metadata (alt text for images, captions, etc.)')
+            ->addable(true)
+            ->deletable(true)
+            ->keyLabel('Property')
+            ->valueLabel('Value'),
+    ]),
             ]);
     }
 
