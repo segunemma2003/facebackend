@@ -73,14 +73,14 @@ class PageContentController extends Controller
         $query = PageContent::where('is_active', true);
 
         if ($request->has('page')) {
-            $query->where('page', $request->page);
+            $query->byPage($request->page);
         }
 
         if ($request->has('section')) {
-            $query->where('section', $request->section);
+            $query->bySection($request->section);
         }
 
-        $contents = $query->orderBy('sort_order')->get();
+        $contents = $query->orderedBySort()->get();
 
         // Group by page and section
         $grouped = $contents->groupBy(['page', 'section'])->map(function ($sections) {
@@ -159,9 +159,9 @@ class PageContentController extends Controller
      */
     public function show(string $page): JsonResponse
     {
-        $contents = PageContent::where('page', $page)
-            ->where('is_active', true)
-            ->orderBy('sort_order')
+        $contents = PageContent::byPage($page)
+            ->activeContent()
+            ->orderedBySort()
             ->get();
 
         if ($contents->isEmpty()) {
@@ -245,10 +245,10 @@ class PageContentController extends Controller
      */
     public function section(string $page, string $section): JsonResponse
     {
-        $contents = PageContent::where('page', $page)
-            ->where('section', $section)
-            ->where('is_active', true)
-            ->orderBy('sort_order')
+        $contents = PageContent::byPage($page)
+            ->bySection($section)
+            ->activeContent()
+            ->orderedBySort()
             ->get();
 
         if ($contents->isEmpty()) {
@@ -334,10 +334,10 @@ class PageContentController extends Controller
      */
     public function item(string $page, string $section, string $key): JsonResponse
     {
-        $content = PageContent::where('page', $page)
-            ->where('section', $section)
+        $content = PageContent::byPage($page)
+            ->bySection($section)
             ->where('key', $key)
-            ->where('is_active', true)
+            ->activeContent()
             ->first();
 
         if (!$content) {
@@ -399,7 +399,7 @@ class PageContentController extends Controller
     public function pages(): JsonResponse
     {
         $pages = PageContent::selectRaw('page, COUNT(DISTINCT section) as sections_count, COUNT(*) as content_items_count')
-            ->where('is_active', true)
+            ->activeContent()
             ->groupBy('page')
             ->orderBy('page')
             ->get();
@@ -416,14 +416,37 @@ class PageContentController extends Controller
     }
 
     /**
-     * Transform content based on type
+     * Transform content based on type with proper image URL handling
      */
     private function transformContent(PageContent $item)
     {
+        $rawContent = $item->getRawOriginal('content');
+
         return match($item->type) {
-            'json' => json_decode($item->getRawOriginal('content'), true),
-            'image' => $item->getRawOriginal('content') ? asset('storage/' . $item->getRawOriginal('content')) : null,
-            default => $item->getRawOriginal('content')
+            'json' => json_decode($rawContent, true),
+            'boolean' => filter_var($rawContent, FILTER_VALIDATE_BOOLEAN),
+            'number' => is_numeric($rawContent) ? (float) $rawContent : $rawContent,
+            'image' => $this->transformImageContent($rawContent),
+            'url' => $rawContent,
+            default => $rawContent
         };
+    }
+
+    /**
+     * Transform image content with proper URL handling
+     */
+    private function transformImageContent(?string $content): ?string
+    {
+        if (!$content) {
+            return null;
+        }
+
+        // If it's already a full URL (external), return as-is
+        if (str_starts_with($content, 'http://') || str_starts_with($content, 'https://')) {
+            return $content;
+        }
+
+        // If it's a storage path, prepend the storage URL
+        return asset('storage/' . $content);
     }
 }
