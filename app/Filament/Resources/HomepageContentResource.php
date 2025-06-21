@@ -305,6 +305,10 @@ class HomepageContentResource extends BasePageContentResource
                             ->rows(3)
                             ->visible(fn (Forms\Get $get) => $get('type') === 'text')
                             ->required(fn (Forms\Get $get) => $get('type') === 'text')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                $set('content', $state);
+                            })
                             ->afterStateHydrated(fn ($component, $state, $record) =>
                                 $component->state($record?->getRawOriginal('content') ?? $state))
                             ->dehydrated(false),
@@ -313,22 +317,15 @@ class HomepageContentResource extends BasePageContentResource
                         Forms\Components\RichEditor::make('html_content')
                             ->label('HTML Content')
                             ->toolbarButtons([
-                                'blockquote',
-                                'bold',
-                                'bulletList',
-                                'codeBlock',
-                                'h2',
-                                'h3',
-                                'italic',
-                                'link',
-                                'orderedList',
-                                'redo',
-                                'strike',
-                                'underline',
-                                'undo',
+                                'blockquote', 'bold', 'bulletList', 'codeBlock', 'h2', 'h3',
+                                'italic', 'link', 'orderedList', 'redo', 'strike', 'underline', 'undo',
                             ])
                             ->visible(fn (Forms\Get $get) => $get('type') === 'html')
                             ->required(fn (Forms\Get $get) => $get('type') === 'html')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                $set('content', $state);
+                            })
                             ->afterStateHydrated(fn ($component, $state, $record) =>
                                 $component->state($record?->getRawOriginal('content') ?? $state))
                             ->dehydrated(false),
@@ -339,6 +336,10 @@ class HomepageContentResource extends BasePageContentResource
                             ->url()
                             ->visible(fn (Forms\Get $get) => $get('type') === 'url')
                             ->required(fn (Forms\Get $get) => $get('type') === 'url')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                $set('content', $state);
+                            })
                             ->afterStateHydrated(fn ($component, $state, $record) =>
                                 $component->state($record?->getRawOriginal('content') ?? $state))
                             ->dehydrated(false),
@@ -349,6 +350,10 @@ class HomepageContentResource extends BasePageContentResource
                             ->numeric()
                             ->visible(fn (Forms\Get $get) => $get('type') === 'number')
                             ->required(fn (Forms\Get $get) => $get('type') === 'number')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                $set('content', $state);
+                            })
                             ->afterStateHydrated(fn ($component, $state, $record) =>
                                 $component->state($record?->getRawOriginal('content') ?? $state))
                             ->dehydrated(false),
@@ -357,6 +362,10 @@ class HomepageContentResource extends BasePageContentResource
                         Forms\Components\Toggle::make('boolean_content')
                             ->label('Boolean Value')
                             ->visible(fn (Forms\Get $get) => $get('type') === 'boolean')
+                            ->live()
+                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                $set('content', $state ? 'true' : 'false');
+                            })
                             ->afterStateHydrated(fn ($component, $state, $record) =>
                                 $component->state(filter_var($record?->getRawOriginal('content') ?? $state, FILTER_VALIDATE_BOOLEAN)))
                             ->dehydrated(false),
@@ -375,6 +384,16 @@ class HomepageContentResource extends BasePageContentResource
                             ])
                             ->visible(fn (Forms\Get $get) => $get('type') === 'image')
                             ->required(fn (Forms\Get $get) => $get('type') === 'image')
+                            ->live()
+                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                if (is_array($state) && !empty($state)) {
+                                    $set('content', $state[0]);
+                                } elseif (is_string($state)) {
+                                    $set('content', $state);
+                                } else {
+                                    $set('content', null);
+                                }
+                            })
                             ->afterStateHydrated(function ($component, $state, $record) {
                                 $content = $record?->getRawOriginal('content');
                                 if ($content && !str_starts_with($content, 'http')) {
@@ -389,13 +408,19 @@ class HomepageContentResource extends BasePageContentResource
                         Forms\Components\Repeater::make('json_content')
                             ->label('JSON Data Items')
                             ->visible(fn (Forms\Get $get) => $get('type') === 'json')
-                            ->required(fn (Forms\Get $get) => $get('type') === 'json')
                             ->schema(fn (Forms\Get $get) => static::getJsonSchema($get('key')))
                             ->columns(3)
                             ->addActionLabel(fn (Forms\Get $get) => static::getJsonAddLabel($get('key')))
                             ->reorderable()
                             ->collapsible()
                             ->itemLabel(fn (array $state, Forms\Get $get): ?string => static::getJsonItemLabel($state, $get('key')))
+                            ->live()
+                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                // Update the hidden content field whenever repeater changes
+                                if (is_array($state) && !empty($state)) {
+                                    $set('content', json_encode($state, JSON_UNESCAPED_UNICODE));
+                                }
+                            })
                             ->afterStateHydrated(function ($component, $state, $record) {
                                 if (!$record) return;
 
@@ -422,6 +447,13 @@ class HomepageContentResource extends BasePageContentResource
                             ->valueLabel('Value')
                             ->visible(fn (Forms\Get $get) => $get('type') === 'json')
                             ->helperText('For simple key-value pairs. Use the structured editor above for lists of items.')
+                            ->live()
+                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                // Update the hidden content field whenever key-value changes
+                                if (is_array($state) && !empty($state)) {
+                                    $set('content', json_encode($state, JSON_UNESCAPED_UNICODE));
+                                }
+                            })
                             ->afterStateHydrated(function ($component, $state, $record) {
                                 if (!$record) return;
 
@@ -444,6 +476,13 @@ class HomepageContentResource extends BasePageContentResource
                             ->rows(8)
                             ->helperText('For complex nested structures or when you prefer to edit JSON directly.')
                             ->visible(fn (Forms\Get $get) => $get('type') === 'json')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                // Update the hidden content field whenever textarea changes
+                                if (!empty($state)) {
+                                    $set('content', $state);
+                                }
+                            })
                             ->afterStateHydrated(function ($component, $state, $record) {
                                 if (!$record) return;
 
@@ -462,22 +501,10 @@ class HomepageContentResource extends BasePageContentResource
                                 fn (Forms\Get $get) => $get('type') === 'json' ? 'json' : '',
                             ]),
 
-                        // Hidden field to store the actual content
+                        // Hidden field to store the actual content - simplified
                         Forms\Components\Hidden::make('content')
                             ->afterStateHydrated(fn ($component, $state, $record) =>
-                                $component->state($record?->getRawOriginal('content') ?? $state))
-                            ->dehydrateStateUsing(function ($state, Forms\Get $get) {
-                                return match ($get('type')) {
-                                    'text' => $get('text_content'),
-                                    'html' => $get('html_content'),
-                                    'url' => $get('url_content'),
-                                    'number' => $get('number_content'),
-                                    'boolean' => $get('boolean_content') ? 'true' : 'false',
-                                    'image' => $get('image_content') ? (is_array($get('image_content')) ? $get('image_content')[0] : $get('image_content')) : null,
-                                    'json' => static::processJsonContent($get),
-                                    default => $state
-                                };
-                            }),
+                                $component->state($record?->getRawOriginal('content') ?? $state)),
 
                         // Meta data
                         Forms\Components\KeyValue::make('meta')
@@ -705,7 +732,7 @@ class HomepageContentResource extends BasePageContentResource
             'event_schedule' => ($state['time'] ?? '') . ($state['title'] ? ' - ' . $state['title'] : 'New Event'),
             'team_members' => ($state['name'] ?? 'New Team Member') . ($state['position'] ? ' - ' . $state['position'] : ''),
             default => $state['title'] ?? $state['name'] ?? 'New Item'
-        };
+    };
     }
 
     // Helper method to format JSON preview in table
