@@ -211,17 +211,17 @@ abstract class BasePageContentResource extends Resource
                     ->wrap()
                     ->tooltip(fn ($record) => $record->content_preview)
                     ->formatStateUsing(function ($state, $record) {
-                        return match ($record->type) {
-                            'image' => $record->getRawOriginal('content') ?
-                                '🖼️ ' . basename($record->getRawOriginal('content')) :
-                                'No image',
-                            'json' => '📄 JSON (' . (is_array($record->formatted_content) ? count($record->formatted_content) : 0) . ' items)',
-                            'boolean' => $record->formatted_content ? '✅ True' : '❌ False',
-                            'url' => '🔗 ' . ($record->getRawOriginal('content') ?: 'No URL'),
-                            'html' => '📝 ' . strip_tags($record->getRawOriginal('content') ?: ''),
-                            default => $record->getRawOriginal('content') ?: 'No content'
-                        };
-                    }),
+    return match ($record->type) {
+        'image' => $record->getRawOriginal('content') ?
+            '🖼️ ' . $this->getImageBasename($record->getRawOriginal('content')) :
+            'No image',
+        'json' => static::formatJsonPreview($record),
+        'boolean' => $record->formatted_content ? '✅ True' : '❌ False',
+        'url' => '🔗 ' . ($record->getRawOriginal('content') ?: 'No URL'),
+        'html' => '📝 ' . strip_tags($record->getRawOriginal('content') ?: ''),
+        default => $record->getRawOriginal('content') ?: 'No content'
+    };
+}),
 
                 Tables\Columns\TextColumn::make('sort_order')
                     ->sortable()
@@ -328,6 +328,29 @@ abstract class BasePageContentResource extends Resource
         return ['key', 'content', 'section'];
     }
 
+
+    private static function getImageBasename(string $content): string
+{
+    // Handle JSON object format (with UUID)
+    if (str_starts_with($content, '{')) {
+        $decoded = json_decode($content, true);
+        if ($decoded && is_array($decoded)) {
+            $filePath = array_values($decoded)[0] ?? '';
+            return basename($filePath);
+        }
+    }
+
+    // Handle JSON array format
+    if (str_starts_with($content, '[')) {
+        $decoded = json_decode($content, true);
+        if ($decoded && is_array($decoded) && !empty($decoded)) {
+            return basename($decoded[0]);
+        }
+    }
+
+    // Handle direct file path
+    return basename($content);
+}
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::byPage(static::getPageName())->count();

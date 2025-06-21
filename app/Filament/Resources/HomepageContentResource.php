@@ -8,6 +8,8 @@ use Filament\Forms\Form;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Log;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class HomepageContentResource extends BasePageContentResource
 {
@@ -297,24 +299,25 @@ class HomepageContentResource extends BasePageContentResource
                             ->helperText('Uncheck to hide this content from the frontend'),
                     ]),
 
-                Forms\Components\Section::make('Content')
+               Forms\Components\Section::make('Content')
                     ->schema([
+                        // Hidden field that actually stores the data
+                        Forms\Components\Hidden::make('content'),
+
                         // Text content
-                        Forms\Components\Textarea::make('text_content')
+                        Forms\Components\Textarea::make('text_input')
                             ->label('Text Content')
                             ->rows(3)
                             ->visible(fn (Forms\Get $get) => $get('type') === 'text')
                             ->required(fn (Forms\Get $get) => $get('type') === 'text')
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function ($state, Forms\Set $set) {
-                                $set('content', $state);
-                            })
+                            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state))
                             ->afterStateHydrated(fn ($component, $state, $record) =>
-                                $component->state($record?->getRawOriginal('content') ?? $state))
+                                $component->state($record && $record->type === 'text' ? $record->getRawOriginal('content') : null))
                             ->dehydrated(false),
 
                         // HTML content
-                        Forms\Components\RichEditor::make('html_content')
+                        Forms\Components\RichEditor::make('html_input')
                             ->label('HTML Content')
                             ->toolbarButtons([
                                 'blockquote', 'bold', 'bulletList', 'codeBlock', 'h2', 'h3',
@@ -323,168 +326,126 @@ class HomepageContentResource extends BasePageContentResource
                             ->visible(fn (Forms\Get $get) => $get('type') === 'html')
                             ->required(fn (Forms\Get $get) => $get('type') === 'html')
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function ($state, Forms\Set $set) {
-                                $set('content', $state);
-                            })
+                            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state))
                             ->afterStateHydrated(fn ($component, $state, $record) =>
-                                $component->state($record?->getRawOriginal('content') ?? $state))
+                                $component->state($record && $record->type === 'html' ? $record->getRawOriginal('content') : null))
                             ->dehydrated(false),
 
                         // URL content
-                        Forms\Components\TextInput::make('url_content')
+                        Forms\Components\TextInput::make('url_input')
                             ->label('URL')
                             ->url()
                             ->visible(fn (Forms\Get $get) => $get('type') === 'url')
                             ->required(fn (Forms\Get $get) => $get('type') === 'url')
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function ($state, Forms\Set $set) {
-                                $set('content', $state);
-                            })
+                            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state))
                             ->afterStateHydrated(fn ($component, $state, $record) =>
-                                $component->state($record?->getRawOriginal('content') ?? $state))
+                                $component->state($record && $record->type === 'url' ? $record->getRawOriginal('content') : null))
                             ->dehydrated(false),
 
                         // Number content
-                        Forms\Components\TextInput::make('number_content')
+                        Forms\Components\TextInput::make('number_input')
                             ->label('Number')
                             ->numeric()
                             ->visible(fn (Forms\Get $get) => $get('type') === 'number')
                             ->required(fn (Forms\Get $get) => $get('type') === 'number')
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function ($state, Forms\Set $set) {
-                                $set('content', $state);
-                            })
+                            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state))
                             ->afterStateHydrated(fn ($component, $state, $record) =>
-                                $component->state($record?->getRawOriginal('content') ?? $state))
+                                $component->state($record && $record->type === 'number' ? $record->getRawOriginal('content') : null))
                             ->dehydrated(false),
 
                         // Boolean content
-                        Forms\Components\Toggle::make('boolean_content')
+                        Forms\Components\Toggle::make('boolean_input')
                             ->label('Boolean Value')
                             ->visible(fn (Forms\Get $get) => $get('type') === 'boolean')
                             ->live()
-                            ->afterStateUpdated(function ($state, Forms\Set $set) {
-                                $set('content', $state ? 'true' : 'false');
-                            })
+                            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state ? 'true' : 'false'))
                             ->afterStateHydrated(fn ($component, $state, $record) =>
-                                $component->state(filter_var($record?->getRawOriginal('content') ?? $state, FILTER_VALIDATE_BOOLEAN)))
+                                $component->state($record && $record->type === 'boolean' ?
+                                    filter_var($record->getRawOriginal('content'), FILTER_VALIDATE_BOOLEAN) : false))
                             ->dehydrated(false),
 
-                        // Image upload
-                        Forms\Components\FileUpload::make('image_content')
-                            ->label('Image')
+                        // Image upload - using a different field name
+                        Forms\Components\FileUpload::make('image_file')
+                            ->label('Image Upload')
                             ->image()
                             ->directory('homepage')
+                            ->disk('public')
                             ->visibility('public')
                             ->imageEditor()
-                            ->imageEditorAspectRatios([
-                                '16:9',
-                                '4:3',
-                                '1:1',
-                            ])
+                            ->imageEditorAspectRatios(['16:9', '4:3', '1:1'])
                             ->visible(fn (Forms\Get $get) => $get('type') === 'image')
                             ->required(fn (Forms\Get $get) => $get('type') === 'image')
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+                            ->maxSize(5120)
+                            ->multiple(false)
                             ->live()
                             ->afterStateUpdated(function ($state, Forms\Set $set) {
-                                if (is_array($state) && !empty($state)) {
-                                    $set('content', $state[0]);
-                                } elseif (is_string($state)) {
-                                    $set('content', $state);
+                                // When file is uploaded, update the content field
+                                if ($state) {
+                                    // Filament returns array even for single files
+                                    $filePath = is_array($state) ? $state[0] : $state;
+                                    $set('content', $filePath);
                                 } else {
                                     $set('content', null);
                                 }
                             })
                             ->afterStateHydrated(function ($component, $state, $record) {
-                                $content = $record?->getRawOriginal('content');
-                                if ($content && !str_starts_with($content, 'http')) {
-                                    $component->state([$content]);
-                                } else {
+                                if (!$record || $record->type !== 'image') {
                                     $component->state([]);
+                                    return;
                                 }
-                            })
-                            ->dehydrated(false),
-
-                        // JSON content - Structured Repeater
-                        Forms\Components\Repeater::make('json_content')
-                            ->label('JSON Data Items')
-                            ->visible(fn (Forms\Get $get) => $get('type') === 'json')
-                            ->schema(fn (Forms\Get $get) => static::getJsonSchema($get('key')))
-                            ->columns(3)
-                            ->addActionLabel(fn (Forms\Get $get) => static::getJsonAddLabel($get('key')))
-                            ->reorderable()
-                            ->collapsible()
-                            ->itemLabel(fn (array $state, Forms\Get $get): ?string => static::getJsonItemLabel($state, $get('key')))
-                            ->live()
-                            ->afterStateUpdated(function ($state, Forms\Set $set) {
-                                // Update the hidden content field whenever repeater changes
-                                if (is_array($state) && !empty($state)) {
-                                    $set('content', json_encode($state, JSON_UNESCAPED_UNICODE));
-                                }
-                            })
-                            ->afterStateHydrated(function ($component, $state, $record) {
-                                if (!$record) return;
 
                                 $content = $record->getRawOriginal('content');
+
+                                if (!$content) {
+                                    $component->state([]);
+                                    return;
+                                }
+
+                                // Extract the actual file path from various formats
+                                $filePath = null;
+
                                 if (is_string($content)) {
-                                    $decoded = json_decode($content, true);
-                                    if ($decoded !== null && is_array($decoded) && isset($decoded[0])) {
-                                        // Array of objects - use repeater
-                                        $component->state($decoded);
-                                        return;
+                                    if (str_starts_with($content, '{')) {
+                                        // JSON object format
+                                        $decoded = json_decode($content, true);
+                                        if ($decoded && is_array($decoded)) {
+                                            $filePath = array_values($decoded)[0] ?? null;
+                                        }
+                                    } elseif (str_starts_with($content, '[')) {
+                                        // JSON array format
+                                        $decoded = json_decode($content, true);
+                                        if ($decoded && is_array($decoded) && !empty($decoded)) {
+                                            $filePath = $decoded[0];
+                                        }
+                                    } else {
+                                        // Direct file path
+                                        $filePath = $content;
                                     }
                                 }
-                                $component->state([]);
+
+                                // FileUpload component expects an array, even for single files
+                                $component->state($filePath ? [$filePath] : []);
                             })
                             ->dehydrated(false),
 
-                        // Simple Key-Value for flat JSON objects
-                        Forms\Components\KeyValue::make('json_simple')
-                            ->label('Simple JSON Data')
-                            ->addable(true)
-                            ->deletable(true)
-                            ->reorderable(true)
-                            ->keyLabel('Key')
-                            ->valueLabel('Value')
-                            ->visible(fn (Forms\Get $get) => $get('type') === 'json')
-                            ->helperText('For simple key-value pairs. Use the structured editor above for lists of items.')
-                            ->live()
-                            ->afterStateUpdated(function ($state, Forms\Set $set) {
-                                // Update the hidden content field whenever key-value changes
-                                if (is_array($state) && !empty($state)) {
-                                    $set('content', json_encode($state, JSON_UNESCAPED_UNICODE));
-                                }
-                            })
-                            ->afterStateHydrated(function ($component, $state, $record) {
-                                if (!$record) return;
 
-                                $content = $record->getRawOriginal('content');
-                                if (is_string($content)) {
-                                    $decoded = json_decode($content, true);
-                                    if ($decoded !== null && is_array($decoded) && !isset($decoded[0])) {
-                                        // Simple key-value object - use KeyValue
-                                        $component->state($decoded);
-                                        return;
-                                    }
-                                }
-                                $component->state([]);
-                            })
-                            ->dehydrated(false),
 
-                        // Raw JSON textarea for complex structures
-                        Forms\Components\Textarea::make('json_textarea_content')
-                            ->label('Raw JSON (Advanced)')
+                        // JSON content
+                        Forms\Components\Textarea::make('json_input')
+                            ->label('JSON Content')
                             ->rows(8)
-                            ->helperText('For complex nested structures or when you prefer to edit JSON directly.')
                             ->visible(fn (Forms\Get $get) => $get('type') === 'json')
+                            ->required(fn (Forms\Get $get) => $get('type') === 'json')
+                            ->helperText('Enter valid JSON data')
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function ($state, Forms\Set $set) {
-                                // Update the hidden content field whenever textarea changes
-                                if (!empty($state)) {
-                                    $set('content', $state);
-                                }
-                            })
+                            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state))
                             ->afterStateHydrated(function ($component, $state, $record) {
-                                if (!$record) return;
+                                if (!$record || $record->type !== 'json') {
+                                    return;
+                                }
 
                                 $content = $record->getRawOriginal('content');
                                 if (is_string($content)) {
@@ -494,17 +455,21 @@ class HomepageContentResource extends BasePageContentResource
                                     } else {
                                         $component->state($content);
                                     }
+                                } else {
+                                    $component->state('{}');
                                 }
                             })
-                            ->dehydrated(false)
                             ->rules([
-                                fn (Forms\Get $get) => $get('type') === 'json' ? 'json' : '',
-                            ]),
-
-                        // Hidden field to store the actual content - simplified
-                        Forms\Components\Hidden::make('content')
-                            ->afterStateHydrated(fn ($component, $state, $record) =>
-                                $component->state($record?->getRawOriginal('content') ?? $state)),
+                                fn (Forms\Get $get) => $get('type') === 'json' ? function ($attribute, $value, $fail) {
+                                    if (!empty($value)) {
+                                        json_decode($value);
+                                        if (json_last_error() !== JSON_ERROR_NONE) {
+                                            $fail('The content must be valid JSON: ' . json_last_error_msg());
+                                        }
+                                    }
+                                } : '',
+                            ])
+                            ->dehydrated(false),
 
                         // Meta data
                         Forms\Components\KeyValue::make('meta')

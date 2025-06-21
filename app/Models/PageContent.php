@@ -194,27 +194,7 @@ class PageContent extends Model
     }
 
     // Keep the original content accessor but make it less aggressive
-    protected function content(): Attribute
-    {
-        return Attribute::make(
-            get: function ($value) {
-                // For Filament admin, return raw value to avoid issues
-                if (app()->runningInConsole() || request()->is('admin/*')) {
-                    return $value;
-                }
 
-                // For frontend, return formatted content
-                return match($this->type) {
-                    'json' => json_decode($value, true),
-                    'boolean' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
-                    'number' => is_numeric($value) ? (float) $value : $value,
-                    'image' => $value ? (str_starts_with($value, 'http') ? $value : asset('storage/' . $value)) : null,
-                    'url' => $value,
-                    default => $value
-                };
-            }
-        );
-    }
 
     // Helper method to get content by key
     public static function getContent($page, $section, $key, $default = null)
@@ -411,5 +391,132 @@ class PageContent extends Model
         return $rawContent;
     }
 
+public function setContentAttribute($value)
+{
+    // Handle Filament FileUpload component output
+    if ($this->type === 'image') {
+        if (is_array($value)) {
+            // If it's an array, take the first value (file path)
+            $value = !empty($value) ? $value[0] : null;
+        } elseif (is_string($value) && str_starts_with($value, '[')) {
+            // Handle JSON array format
+            $decoded = json_decode($value, true);
+            if ($decoded && is_array($decoded) && !empty($decoded)) {
+                $value = $decoded[0];
+            }
+        } elseif (is_string($value) && str_starts_with($value, '{')) {
+            // Handle JSON object format with UUID
+            $decoded = json_decode($value, true);
+            if ($decoded && is_array($decoded)) {
+                // Extract the file path from the object
+                $value = array_values($decoded)[0] ?? null;
+            }
+        }
+        // If value is still an array after all processing, take first element
+        if (is_array($value) && !empty($value)) {
+            $value = $value[0];
+        }
+    }
 
+    $this->attributes['content'] = $value;
 }
+
+// Also add this method to handle the content accessor more carefully:
+protected function content(): Attribute
+{
+    return Attribute::make(
+        get: function ($value) {
+            // Always return raw value for Filament admin to prevent conflicts
+            if (app()->runningInConsole() ||
+                request()->is('admin/*') ||
+                request()->is('livewire/*') ||
+                app('livewire')->isLivewireRequest()) {
+                return $value;
+            }
+
+            // For frontend, return formatted content
+            return match($this->type) {
+                'json' => json_decode($value, true),
+                'boolean' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
+                'number' => is_numeric($value) ? (float) $value : $value,
+                'image' => $this->getFormattedImageUrl($value),
+                'url' => $value,
+                default => $value
+            };
+        }
+    );
+}
+
+// Add this accessor to your model for displaying images
+
+private function getFormattedImageUrl($value): ?string
+{
+    if (!$value) {
+        return null;
+    }
+
+    // Handle JSON object format (with UUID)
+    if (is_string($value) && str_starts_with($value, '{')) {
+        $decoded = json_decode($value, true);
+        if ($decoded && is_array($decoded)) {
+            $filePath = array_values($decoded)[0] ?? null;
+            if ($filePath) {
+                return str_starts_with($filePath, 'http') ? $filePath : asset('storage/' . $filePath);
+            }
+        }
+    }
+
+    // Handle JSON array format
+    if (is_string($value) && str_starts_with($value, '[')) {
+        $decoded = json_decode($value, true);
+        if ($decoded && is_array($decoded) && !empty($decoded)) {
+            $filePath = $decoded[0];
+            return str_starts_with($filePath, 'http') ? $filePath : asset('storage/' . $filePath);
+        }
+    }
+
+    // Handle direct file path
+    return str_starts_with($value, 'http') ? $value : asset('storage/' . $value);
+}
+
+// Updated image URL accessor
+public function getImageUrlAttribute(): ?string
+{
+    if ($this->type !== 'image' || !$this->getRawOriginal('content')) {
+        return null;
+    }
+
+    return $this->getFormattedImageUrl($this->getRawOriginal('content'));
+}
+
+// Add a method to get the clean file path (without full URL)
+public function getImagePathAttribute(): ?string
+{
+    if ($this->type !== 'image' || !$this->getRawOriginal('content')) {
+        return null;
+    }
+
+    $content = $this->getRawOriginal('content');
+
+    // Handle JSON object format (with UUID)
+    if (is_string($content) && str_starts_with($content, '{')) {
+        $decoded = json_decode($content, true);
+        if ($decoded && is_array($decoded)) {
+            return array_values($decoded)[0] ?? null;
+        }
+    }
+
+    // Handle JSON array format
+    if (is_string($content) && str_starts_with($content, '[')) {
+        $decoded = json_decode($content, true);
+        if ($decoded && is_array($decoded) && !empty($decoded)) {
+            return $decoded[0];
+        }
+    }
+
+    // Return direct path
+    return $content;
+}
+}
+
+
