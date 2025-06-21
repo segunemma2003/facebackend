@@ -230,14 +230,16 @@ class HomepageContentResource extends BasePageContentResource
                                     'subtitle' => 'Section Subtitle',
                                     'content' => 'Section Content',
                                     'empty_state_message' => 'Empty State Message',
-                                    'button_text' => 'Button Text'
+                                    'button_text' => 'Button Text',
+                                    'gallery_items' => 'Gallery Items (JSON)'
                                 ],
                                 'past_winners' => [
                                     'title' => 'Section Title',
                                     'subtitle' => 'Section Subtitle',
                                     'content' => 'Section Content',
                                     'empty_state_message' => 'Empty State Message',
-                                    'button_text' => 'Button Text'
+                                    'button_text' => 'Button Text',
+                                    'testimonials' => 'Winner Testimonials (JSON)'
                                 ],
                                 'award_ceremony' => [
                                     'title' => 'Ceremony Title',
@@ -251,7 +253,9 @@ class HomepageContentResource extends BasePageContentResource
                                     'registration_open_message' => 'Registration Open Message',
                                     'registration_closed_message' => 'Registration Closed Message',
                                     'registration_button_text' => 'Registration Button Text',
-                                    'ticket_info' => 'Ticket Information (JSON)'
+                                    'ticket_info' => 'Ticket Information (JSON)',
+                                    'event_schedule' => 'Event Schedule (JSON)',
+                                    'team_members' => 'Organizing Team (JSON)'
                                 ],
                                 default => []
                             })
@@ -381,42 +385,64 @@ class HomepageContentResource extends BasePageContentResource
                             })
                             ->dehydrated(false),
 
-                        // JSON content as Key-Value pairs
-                        Forms\Components\KeyValue::make('json_content')
-                            ->label('JSON Data')
-                            ->addable(true)
-                            ->deletable(true)
-                            ->reorderable(true)
-                            ->keyLabel('Key')
-                            ->valueLabel('Value')
+                        // JSON content - Structured Repeater
+                        Forms\Components\Repeater::make('json_content')
+                            ->label('JSON Data Items')
                             ->visible(fn (Forms\Get $get) => $get('type') === 'json')
                             ->required(fn (Forms\Get $get) => $get('type') === 'json')
-                            ->helperText(fn (Forms\Get $get) => match ($get('key')) {
-                                'face_meanings' => 'Add entries like: letter=F, word=Focus, description=The unwavering commitment...',
-                                'approach_items' => 'Add entries like: title=Global Reach, description=..., icon=globe',
-                                'ticket_info' => 'Add entries like: type=Standard, price=$250, description=General admission...',
-                                default => 'Enter key-value pairs. Complex nested data should be entered as JSON string values.'
-                            })
+                            ->schema(fn (Forms\Get $get) => static::getJsonSchema($get('key')))
+                            ->columns(3)
+                            ->addActionLabel(fn (Forms\Get $get) => static::getJsonAddLabel($get('key')))
+                            ->reorderable()
+                            ->collapsible()
+                            ->itemLabel(fn (array $state, Forms\Get $get): ?string => static::getJsonItemLabel($state, $get('key')))
                             ->afterStateHydrated(function ($component, $state, $record) {
                                 if (!$record) return;
 
                                 $content = $record->getRawOriginal('content');
                                 if (is_string($content)) {
                                     $decoded = json_decode($content, true);
-                                    if ($decoded !== null) {
-                                        // Convert JSON array to flat key-value pairs
-                                        $kvPairs = static::jsonToKeyValue($decoded);
-                                        $component->state($kvPairs);
+                                    if ($decoded !== null && is_array($decoded) && isset($decoded[0])) {
+                                        // Array of objects - use repeater
+                                        $component->state($decoded);
+                                        return;
                                     }
                                 }
+                                $component->state([]);
                             })
                             ->dehydrated(false),
 
-                        // Alternative: JSON as textarea for complex structures
+                        // Simple Key-Value for flat JSON objects
+                        Forms\Components\KeyValue::make('json_simple')
+                            ->label('Simple JSON Data')
+                            ->addable(true)
+                            ->deletable(true)
+                            ->reorderable(true)
+                            ->keyLabel('Key')
+                            ->valueLabel('Value')
+                            ->visible(fn (Forms\Get $get) => $get('type') === 'json')
+                            ->helperText('For simple key-value pairs. Use the structured editor above for lists of items.')
+                            ->afterStateHydrated(function ($component, $state, $record) {
+                                if (!$record) return;
+
+                                $content = $record->getRawOriginal('content');
+                                if (is_string($content)) {
+                                    $decoded = json_decode($content, true);
+                                    if ($decoded !== null && is_array($decoded) && !isset($decoded[0])) {
+                                        // Simple key-value object - use KeyValue
+                                        $component->state($decoded);
+                                        return;
+                                    }
+                                }
+                                $component->state([]);
+                            })
+                            ->dehydrated(false),
+
+                        // Raw JSON textarea for complex structures
                         Forms\Components\Textarea::make('json_textarea_content')
-                            ->label('JSON Content (Advanced)')
-                            ->rows(12)
-                            ->helperText('For complex nested JSON structures. Use the Key-Value editor above for simple data.')
+                            ->label('Raw JSON (Advanced)')
+                            ->rows(8)
+                            ->helperText('For complex nested structures or when you prefer to edit JSON directly.')
                             ->visible(fn (Forms\Get $get) => $get('type') === 'json')
                             ->afterStateHydrated(function ($component, $state, $record) {
                                 if (!$record) return;
@@ -483,6 +509,205 @@ class HomepageContentResource extends BasePageContentResource
         ];
     }
 
+    // Helper method to get JSON schema based on key
+    protected static function getJsonSchema(string $key): array
+    {
+        return match ($key) {
+            'face_meanings' => [
+                Forms\Components\TextInput::make('letter')
+                    ->label('Letter')
+                    ->required()
+                    ->maxLength(1)
+                    ->placeholder('F')
+                    ->columnSpan(1),
+                Forms\Components\TextInput::make('word')
+                    ->label('Word')
+                    ->required()
+                    ->placeholder('Focus')
+                    ->columnSpan(2),
+                Forms\Components\Textarea::make('description')
+                    ->label('Description')
+                    ->required()
+                    ->rows(2)
+                    ->placeholder('The unwavering commitment to vision and purpose')
+                    ->columnSpanFull(),
+            ],
+            'approach_items' => [
+                Forms\Components\TextInput::make('title')
+                    ->label('Title')
+                    ->required()
+                    ->placeholder('Global Reach, Local Impact')
+                    ->columnSpan(2),
+                Forms\Components\TextInput::make('icon')
+                    ->label('Icon')
+                    ->required()
+                    ->placeholder('globe')
+                    ->helperText('Icon name (e.g., globe, users, trophy)')
+                    ->columnSpan(1),
+                Forms\Components\Textarea::make('description')
+                    ->label('Description')
+                    ->required()
+                    ->rows(3)
+                    ->placeholder('Recognizing excellence worldwide...')
+                    ->columnSpanFull(),
+            ],
+            'ticket_info' => [
+                Forms\Components\TextInput::make('type')
+                    ->label('Ticket Type')
+                    ->required()
+                    ->placeholder('Standard Attendance')
+                    ->columnSpan(1),
+                Forms\Components\TextInput::make('price')
+                    ->label('Price')
+                    ->required()
+                    ->placeholder('$250')
+                    ->columnSpan(1),
+                Forms\Components\Textarea::make('description')
+                    ->label('Description')
+                    ->required()
+                    ->rows(2)
+                    ->placeholder('General admission with dinner')
+                    ->columnSpan(2),
+            ],
+            'gallery_items' => [
+                Forms\Components\TextInput::make('title')
+                    ->label('Image Title')
+                    ->required()
+                    ->columnSpan(2),
+                Forms\Components\TextInput::make('image_url')
+                    ->label('Image URL')
+                    ->url()
+                    ->required()
+                    ->columnSpan(1),
+                Forms\Components\Textarea::make('description')
+                    ->label('Description')
+                    ->rows(2)
+                    ->columnSpan(2),
+                Forms\Components\TextInput::make('category')
+                    ->label('Category')
+                    ->placeholder('Awards, Events, etc.')
+                    ->columnSpan(1),
+            ],
+            'testimonials' => [
+                Forms\Components\TextInput::make('name')
+                    ->label('Name')
+                    ->required()
+                    ->columnSpan(1),
+                Forms\Components\TextInput::make('title')
+                    ->label('Title/Position')
+                    ->required()
+                    ->columnSpan(1),
+                Forms\Components\TextInput::make('company')
+                    ->label('Company')
+                    ->columnSpan(1),
+                Forms\Components\Textarea::make('quote')
+                    ->label('Quote')
+                    ->required()
+                    ->rows(3)
+                    ->columnSpanFull(),
+                Forms\Components\TextInput::make('image')
+                    ->label('Profile Image URL')
+                    ->url()
+                    ->columnSpan(2),
+                Forms\Components\TextInput::make('rating')
+                    ->label('Rating (1-5)')
+                    ->numeric()
+                    ->minValue(1)
+                    ->maxValue(5)
+                    ->columnSpan(1),
+            ],
+            'event_schedule' => [
+                Forms\Components\TextInput::make('time')
+                    ->label('Time')
+                    ->required()
+                    ->placeholder('7:00 PM')
+                    ->columnSpan(1),
+                Forms\Components\TextInput::make('title')
+                    ->label('Event Title')
+                    ->required()
+                    ->columnSpan(2),
+                Forms\Components\Textarea::make('description')
+                    ->label('Description')
+                    ->rows(2)
+                    ->columnSpan(2),
+                Forms\Components\TextInput::make('location')
+                    ->label('Location')
+                    ->columnSpan(1),
+            ],
+            'team_members' => [
+                Forms\Components\TextInput::make('name')
+                    ->label('Name')
+                    ->required()
+                    ->columnSpan(1),
+                Forms\Components\TextInput::make('position')
+                    ->label('Position')
+                    ->required()
+                    ->columnSpan(1),
+                Forms\Components\TextInput::make('department')
+                    ->label('Department')
+                    ->columnSpan(1),
+                Forms\Components\Textarea::make('bio')
+                    ->label('Bio')
+                    ->rows(3)
+                    ->columnSpan(2),
+                Forms\Components\TextInput::make('image')
+                    ->label('Profile Image URL')
+                    ->url()
+                    ->columnSpan(1),
+                Forms\Components\TextInput::make('email')
+                    ->label('Email')
+                    ->email()
+                    ->columnSpan(1),
+                Forms\Components\TextInput::make('linkedin')
+                    ->label('LinkedIn URL')
+                    ->url()
+                    ->columnSpan(1),
+            ],
+            // Generic fallback for unknown keys
+            default => [
+                Forms\Components\TextInput::make('title')
+                    ->label('Title')
+                    ->required()
+                    ->columnSpan(2),
+                Forms\Components\TextInput::make('value')
+                    ->label('Value')
+                    ->columnSpan(1),
+                Forms\Components\Textarea::make('description')
+                    ->label('Description')
+                    ->rows(2)
+                    ->columnSpanFull(),
+            ]
+        };
+    }
+
+    protected static function getJsonAddLabel(string $key): string
+    {
+        return match ($key) {
+            'face_meanings' => 'Add FACE Meaning',
+            'approach_items' => 'Add Approach Item',
+            'ticket_info' => 'Add Ticket Type',
+            'gallery_items' => 'Add Gallery Item',
+            'testimonials' => 'Add Testimonial',
+            'event_schedule' => 'Add Event',
+            'team_members' => 'Add Team Member',
+            default => 'Add Item'
+        };
+    }
+
+    protected static function getJsonItemLabel(array $state, string $key): ?string
+    {
+        return match ($key) {
+            'face_meanings' => ($state['letter'] ?? '') . ' - ' . ($state['word'] ?? 'New FACE Meaning'),
+            'approach_items' => $state['title'] ?? 'New Approach Item',
+            'ticket_info' => $state['type'] ?? 'New Ticket Type',
+            'gallery_items' => $state['title'] ?? 'New Gallery Item',
+            'testimonials' => ($state['name'] ?? 'New Testimonial') . ($state['company'] ? ' - ' . $state['company'] : ''),
+            'event_schedule' => ($state['time'] ?? '') . ($state['title'] ? ' - ' . $state['title'] : 'New Event'),
+            'team_members' => ($state['name'] ?? 'New Team Member') . ($state['position'] ? ' - ' . $state['position'] : ''),
+            default => $state['title'] ?? $state['name'] ?? 'New Item'
+        };
+    }
+
     // Helper method to format JSON preview in table
     protected static function formatJsonPreview($record): string
     {
@@ -494,23 +719,78 @@ class HomepageContentResource extends BasePageContentResource
 
         if (is_array($decoded)) {
             $count = count($decoded);
-            $preview = '';
 
-            // Show first few keys for preview
+            // Handle specific known structures
             if (isset($decoded[0]) && is_array($decoded[0])) {
                 // Array of objects
                 $firstItem = $decoded[0];
+
+                if (isset($firstItem['letter'], $firstItem['word'])) {
+                    // FACE meanings
+                    $letters = array_column($decoded, 'letter');
+                    return "📄 FACE Meanings ({$count}): " . implode('', $letters);
+                }
+
+                if (isset($firstItem['title'], $firstItem['icon'])) {
+                    // Approach items
+                    $titles = array_slice(array_column($decoded, 'title'), 0, 2);
+                    $preview = implode(', ', $titles);
+                    if ($count > 2) $preview .= '...';
+                    return "📄 Approach Items ({$count}): {$preview}";
+                }
+
+                if (isset($firstItem['type'], $firstItem['price'])) {
+                    // Ticket info
+                    $types = array_slice(array_column($decoded, 'type'), 0, 2);
+                    $preview = implode(', ', $types);
+                    if ($count > 2) $preview .= '...';
+                    return "📄 Ticket Types ({$count}): {$preview}";
+                }
+
+                if (isset($firstItem['name'], $firstItem['quote'])) {
+                    // Testimonials
+                    $names = array_slice(array_column($decoded, 'name'), 0, 2);
+                    $preview = implode(', ', $names);
+                    if ($count > 2) $preview .= '...';
+                    return "📄 Testimonials ({$count}): {$preview}";
+                }
+
+                if (isset($firstItem['time'], $firstItem['title'])) {
+                    // Event schedule
+                    $events = array_slice(array_column($decoded, 'title'), 0, 2);
+                    $preview = implode(', ', $events);
+                    if ($count > 2) $preview .= '...';
+                    return "📄 Events ({$count}): {$preview}";
+                }
+
+                if (isset($firstItem['name'], $firstItem['position'])) {
+                    // Team members
+                    $members = array_slice(array_column($decoded, 'name'), 0, 2);
+                    $preview = implode(', ', $members);
+                    if ($count > 2) $preview .= '...';
+                    return "📄 Team Members ({$count}): {$preview}";
+                }
+
+                if (isset($firstItem['title'], $firstItem['image_url'])) {
+                    // Gallery items
+                    $titles = array_slice(array_column($decoded, 'title'), 0, 2);
+                    $preview = implode(', ', $titles);
+                    if ($count > 2) $preview .= '...';
+                    return "📄 Gallery Items ({$count}): {$preview}";
+                }
+
+                // Generic array of objects
                 $keys = array_keys($firstItem);
                 $preview = implode(', ', array_slice($keys, 0, 3));
                 if (count($keys) > 3) $preview .= '...';
+                return "📄 Structured data ({$count} items): {$preview}";
             } else {
                 // Simple key-value pairs
                 $keys = array_keys($decoded);
                 $preview = implode(', ', array_slice($keys, 0, 3));
                 if (count($keys) > 3) $preview .= '...';
+                return "📄 Data ({$count} keys): {$preview}";
             }
-
-            return "📄 JSON ({$count} items): {$preview}";
         }
 
         return '📄 JSON Object';
@@ -570,7 +850,8 @@ class HomepageContentResource extends BasePageContentResource
     // Helper method to process JSON content during form submission
     protected static function processJsonContent($get): string
     {
-        $kvContent = $get('json_content');
+        $repeaterContent = $get('json_content');
+        $simpleContent = $get('json_simple');
         $textareaContent = $get('json_textarea_content');
 
         // Prefer textarea content if provided (for complex structures)
@@ -578,9 +859,14 @@ class HomepageContentResource extends BasePageContentResource
             return $textareaContent;
         }
 
-        // Otherwise convert key-value pairs to JSON
-        if (!empty($kvContent) && is_array($kvContent)) {
-            return static::keyValueToJson($kvContent);
+        // Use repeater content for structured data (face_meanings, approach_items, etc.)
+        if (!empty($repeaterContent) && is_array($repeaterContent)) {
+            return json_encode($repeaterContent, JSON_UNESCAPED_UNICODE);
+        }
+
+        // Use simple key-value pairs for basic objects
+        if (!empty($simpleContent) && is_array($simpleContent)) {
+            return json_encode($simpleContent, JSON_UNESCAPED_UNICODE);
         }
 
         return '{}';
