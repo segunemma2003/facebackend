@@ -10,6 +10,7 @@ use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Awcodes\Curator\CuratorPlugin;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -69,6 +70,16 @@ class AdminPanelProvider extends PanelProvider
                 'Event Management',
                 'System',
             ])
+            ->plugins([
+            CuratorPlugin::make()
+                ->label('Media Gallery')
+                ->pluralLabel('Media Gallery')
+                ->navigationIcon('heroicon-o-photo')
+                ->navigationGroup('Content')
+                ->navigationSort(3)
+                ->navigationCountBadge()
+                ->registerNavigation(true),
+        ])
             ->sidebarCollapsibleOnDesktop()
             ->globalSearchKeyBindings(['command+k', 'ctrl+k']);
     }

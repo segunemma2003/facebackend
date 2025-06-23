@@ -9,7 +9,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Log;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Illuminate\Support\HtmlString;
 
 class HomepageContentResource extends BasePageContentResource
 {
@@ -117,8 +117,8 @@ class HomepageContentResource extends BasePageContentResource
                     ->label('Active'),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->modalContent(fn ($record) => view('filament.pages.content-preview', compact('record'))),
+                // Tables\Actions\ViewAction::make()
+                //     ->modalContent(fn ($record) => view('filament.pages.content-preview', compact('record'))),
 
                 Tables\Actions\EditAction::make(),
 
@@ -281,7 +281,7 @@ class HomepageContentResource extends BasePageContentResource
                                 'json' => 'Use for structured data like arrays and objects',
                                 'boolean' => 'Use for true/false values',
                                 'number' => 'Use for numeric values',
-                                'image' => 'Upload images to storage',
+                                'image' => 'Enter image URL from Curator gallery',
                                 'url' => 'For external links and URLs',
                                 'html' => 'Rich text with formatting',
                                 'text' => 'Plain text content',
@@ -299,187 +299,210 @@ class HomepageContentResource extends BasePageContentResource
                             ->helperText('Uncheck to hide this content from the frontend'),
                     ]),
 
+                Forms\Components\Section::make('Content')
+                    ->schema([
+                        // Hidden field that actually stores the data
+                        Forms\Components\Hidden::make('content'),
 
-Forms\Components\Section::make('Content')
-    ->schema([
-        // Hidden field that actually stores the data
-        Forms\Components\Hidden::make('content'),
+                        // Curator Gallery Helper Section (for JSON repeaters)
+                        Forms\Components\Section::make('🖼️ Curator Gallery Helper')
+                            ->schema([
+                                Forms\Components\Placeholder::make('gallery_instructions')
+                                    ->content(new HtmlString('
+                                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                                            <h4 class="font-semibold text-blue-900 mb-2">📸 How to copy image URLs from Curator:</h4>
+                                            <ol class="list-decimal list-inside space-y-1 text-blue-800 text-sm">
+                                                <li><strong>Open Gallery:</strong> Click "Open Curator Gallery" below</li>
+                                                <li><strong>Right-click image:</strong> Right-click any image and select "Copy image address"</li>
+                                                <li><strong>OR Edit image:</strong> Click edit button and copy the file URL from the form</li>
+                                                <li><strong>Paste URL:</strong> Paste the full URL into image fields below</li>
+                                            </ol>
+                                            <p class="text-xs text-blue-600 mt-2">💡 <strong>URL format:</strong> https://your-domain.com/storage/media/filename.jpg</p>
+                                        </div>
+                                    ')),
 
-        // Text content
-        Forms\Components\Textarea::make('text_input')
-            ->label('Text Content')
-            ->rows(3)
-            ->visible(fn (Forms\Get $get) => $get('type') === 'text')
-            ->required(fn (Forms\Get $get) => $get('type') === 'text')
-            ->live(onBlur: true)
-            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state))
-            ->afterStateHydrated(fn ($component, $state, $record) =>
-                $component->state($record && $record->type === 'text' ? $record->getRawOriginal('content') : null))
-            ->dehydrated(false),
+                                Forms\Components\Actions::make([
+                                    Forms\Components\Actions\Action::make('open_gallery')
+                                        ->label('🖼️ Open Curator Gallery')
+                                        ->color('primary')
+                                        ->url('/admin/curator/media', shouldOpenInNewTab: true)
+                                        ->icon('heroicon-o-photo'),
+                                ])
+                                    ->alignCenter()
+                                    ->columnSpanFull(),
+                            ])
+                            ->visible(fn (Forms\Get $get) => $get('type') === 'json')
+                            ->collapsible()
+                            ->collapsed(true)
+                            ->description('Quick access to your Curator gallery for copying URLs'),
 
-        // HTML content
-        Forms\Components\RichEditor::make('html_input')
-            ->label('HTML Content')
-            ->toolbarButtons([
-                'blockquote', 'bold', 'bulletList', 'codeBlock', 'h2', 'h3',
-                'italic', 'link', 'orderedList', 'redo', 'strike', 'underline', 'undo',
-            ])
-            ->visible(fn (Forms\Get $get) => $get('type') === 'html')
-            ->required(fn (Forms\Get $get) => $get('type') === 'html')
-            ->live(onBlur: true)
-            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state))
-            ->afterStateHydrated(fn ($component, $state, $record) =>
-                $component->state($record && $record->type === 'html' ? $record->getRawOriginal('content') : null))
-            ->dehydrated(false),
+                        // Text content
+                        Forms\Components\Textarea::make('text_input')
+                            ->label('Text Content')
+                            ->rows(3)
+                            ->visible(fn (Forms\Get $get) => $get('type') === 'text')
+                            ->required(fn (Forms\Get $get) => $get('type') === 'text')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state))
+                            ->afterStateHydrated(fn ($component, $state, $record) =>
+                                $component->state($record && $record->type === 'text' ? $record->getRawOriginal('content') : null))
+                            ->dehydrated(false),
 
-        // URL content
-        Forms\Components\TextInput::make('url_input')
-            ->label('URL')
-            ->url()
-            ->visible(fn (Forms\Get $get) => $get('type') === 'url')
-            ->required(fn (Forms\Get $get) => $get('type') === 'url')
-            ->live(onBlur: true)
-            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state))
-            ->afterStateHydrated(fn ($component, $state, $record) =>
-                $component->state($record && $record->type === 'url' ? $record->getRawOriginal('content') : null))
-            ->dehydrated(false),
+                        // HTML content
+                        Forms\Components\RichEditor::make('html_input')
+                            ->label('HTML Content')
+                            ->toolbarButtons([
+                                'blockquote', 'bold', 'bulletList', 'codeBlock', 'h2', 'h3',
+                                'italic', 'link', 'orderedList', 'redo', 'strike', 'underline', 'undo',
+                            ])
+                            ->visible(fn (Forms\Get $get) => $get('type') === 'html')
+                            ->required(fn (Forms\Get $get) => $get('type') === 'html')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state))
+                            ->afterStateHydrated(fn ($component, $state, $record) =>
+                                $component->state($record && $record->type === 'html' ? $record->getRawOriginal('content') : null))
+                            ->dehydrated(false),
 
-        // Number content
-        Forms\Components\TextInput::make('number_input')
-            ->label('Number')
-            ->numeric()
-            ->visible(fn (Forms\Get $get) => $get('type') === 'number')
-            ->required(fn (Forms\Get $get) => $get('type') === 'number')
-            ->live(onBlur: true)
-            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state))
-            ->afterStateHydrated(fn ($component, $state, $record) =>
-                $component->state($record && $record->type === 'number' ? $record->getRawOriginal('content') : null))
-            ->dehydrated(false),
+                        // URL content
+                        Forms\Components\TextInput::make('url_input')
+                            ->label('URL')
+                            ->url()
+                            ->visible(fn (Forms\Get $get) => $get('type') === 'url')
+                            ->required(fn (Forms\Get $get) => $get('type') === 'url')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state))
+                            ->afterStateHydrated(fn ($component, $state, $record) =>
+                                $component->state($record && $record->type === 'url' ? $record->getRawOriginal('content') : null))
+                            ->dehydrated(false),
 
-        // Boolean content
-        Forms\Components\Toggle::make('boolean_input')
-            ->label('Boolean Value')
-            ->visible(fn (Forms\Get $get) => $get('type') === 'boolean')
-            ->live()
-            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state ? 'true' : 'false'))
-            ->afterStateHydrated(fn ($component, $state, $record) =>
-                $component->state($record && $record->type === 'boolean' ?
-                    filter_var($record->getRawOriginal('content'), FILTER_VALIDATE_BOOLEAN) : false))
-            ->dehydrated(false),
+                        // Number content
+                        Forms\Components\TextInput::make('number_input')
+                            ->label('Number')
+                            ->numeric()
+                            ->visible(fn (Forms\Get $get) => $get('type') === 'number')
+                            ->required(fn (Forms\Get $get) => $get('type') === 'number')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state))
+                            ->afterStateHydrated(fn ($component, $state, $record) =>
+                                $component->state($record && $record->type === 'number' ? $record->getRawOriginal('content') : null))
+                            ->dehydrated(false),
 
-        // Image upload - using a different field name
-        Forms\Components\FileUpload::make('image_file')
-            ->label('Image Upload')
-            ->image()
-            ->directory('homepage')
-            ->disk('public')
-            ->visibility('public')
-            ->imageEditor()
-            ->imageEditorAspectRatios(['16:9', '4:3', '1:1'])
-            ->visible(fn (Forms\Get $get) => $get('type') === 'image')
-            ->required(fn (Forms\Get $get) => $get('type') === 'image')
-            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
-            ->maxSize(5120)
-            ->multiple(false)
-            ->live()
-            ->afterStateUpdated(function ($state, Forms\Set $set) {
-                // When file is uploaded, update the content field
-                if ($state) {
-                    // Filament returns array even for single files
-                    $filePath = is_array($state) ? $state[0] : $state;
-                    $set('content', $filePath);
-                } else {
-                    $set('content', null);
-                }
-            })
-            ->afterStateHydrated(function ($component, $state, $record) {
-                if (!$record || $record->type !== 'image') {
-                    $component->state([]);
-                    return;
-                }
+                        // Boolean content
+                        Forms\Components\Toggle::make('boolean_input')
+                            ->label('Boolean Value')
+                            ->visible(fn (Forms\Get $get) => $get('type') === 'boolean')
+                            ->live()
+                            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state ? 'true' : 'false'))
+                            ->afterStateHydrated(fn ($component, $state, $record) =>
+                                $component->state($record && $record->type === 'boolean' ?
+                                    filter_var($record->getRawOriginal('content'), FILTER_VALIDATE_BOOLEAN) : false))
+                            ->dehydrated(false),
 
-                $content = $record->getRawOriginal('content');
+                        // Image URL input (replaced FileUpload)
+                        Forms\Components\TextInput::make('image_url')
+                            ->label('Image URL')
+                            ->url()
+                            ->visible(fn (Forms\Get $get) => $get('type') === 'image')
+                            ->required(fn (Forms\Get $get) => $get('type') === 'image')
+                            ->placeholder('https://your-domain.com/storage/media/image.jpg')
+                            ->helperText('Copy image URL from Curator gallery and paste it here')
+                            ->suffixAction(
+                                Forms\Components\Actions\Action::make('open_gallery_for_image')
+                                    ->icon('heroicon-o-photo')
+                                    ->url('/admin/curator/media', shouldOpenInNewTab: true)
+                                    ->tooltip('Open Curator Gallery')
+                            )
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state))
+                            ->afterStateHydrated(fn ($component, $state, $record) =>
+                                $component->state($record && $record->type === 'image' ? $record->getRawOriginal('content') : null))
+                            ->dehydrated(false),
 
-                if (!$content) {
-                    $component->state([]);
-                    return;
-                }
+                        // Show current image preview for existing records
+                        Forms\Components\Placeholder::make('current_image_preview')
+                            ->label('Current Image Preview')
+                            ->content(function (Forms\Get $get, $record) {
+                                if (!$record || $record->type !== 'image') {
+                                    return '';
+                                }
+                                $content = $record->getRawOriginal('content');
+                                if ($content) {
+                                    return '<img src="' . $content . '" alt="Current image" style="max-width: 200px; max-height: 150px; border-radius: 8px; border: 1px solid #e5e7eb;">';
+                                }
+                                return 'No image set';
+                            })
+                            ->visible(fn (Forms\Get $get, $record) => $get('type') === 'image' && $record),
 
-                // Extract the actual file path from various formats
-                $filePath = null;
+                        // JSON content with dynamic repeater based on key
+                        Forms\Components\Repeater::make('json_input')
+                            ->label(fn (Forms\Get $get) => static::getJsonLabel($get('key')))
+                            ->visible(fn (Forms\Get $get) => $get('type') === 'json')
+                            ->required(fn (Forms\Get $get) => $get('type') === 'json')
+                            ->schema(fn (Forms\Get $get) => static::getJsonSchema($get('key')))
+                            ->defaultItems(0)
+                            ->addActionLabel(fn (Forms\Get $get) => static::getJsonAddLabel($get('key')))
+                            ->collapsed()
+                            ->cloneable()
+                            ->collapsible()
+                            ->itemLabel(fn (array $state, Forms\Get $get): ?string =>
+                                static::getJsonItemLabel($state, $get('key'))
+                            )
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                if (empty($state)) {
+                                    $set('content', '[]');
+                                    return;
+                                }
 
-                if (is_string($content)) {
-                    if (str_starts_with($content, '{')) {
-                        // JSON object format
-                        $decoded = json_decode($content, true);
-                        if ($decoded && is_array($decoded)) {
-                            $filePath = array_values($decoded)[0] ?? null;
-                        }
-                    } elseif (str_starts_with($content, '[')) {
-                        // JSON array format
-                        $decoded = json_decode($content, true);
-                        if ($decoded && is_array($decoded) && !empty($decoded)) {
-                            $filePath = $decoded[0];
-                        }
-                    } else {
-                        // Direct file path
-                        $filePath = $content;
-                    }
-                }
+                                // Convert repeater data to JSON - ensure it's always an array
+                                $set('content', json_encode(array_values($state), JSON_UNESCAPED_UNICODE));
+                            })
+                            ->afterStateHydrated(function ($component, $state, $record) {
+                                if (!$record || $record->type !== 'json') {
+                                    $component->state([]);
+                                    return;
+                                }
 
-                // FileUpload component expects an array, even for single files
-                $component->state($filePath ? [$filePath] : []);
-            })
-            ->dehydrated(false),
+                                $content = $record->getRawOriginal('content');
 
+                                if (empty($content)) {
+                                    $component->state([]);
+                                    return;
+                                }
 
+                                if (is_string($content)) {
+                                    $decoded = json_decode($content, true);
+                                    if ($decoded !== null) {
+                                        if (is_array($decoded)) {
+                                            // Handle both array of objects and simple objects
+                                            if (isset($decoded[0]) && is_array($decoded[0])) {
+                                                // Already an array of objects
+                                                $component->state($decoded);
+                                            } else {
+                                                // Simple object, wrap in array for repeater
+                                                $component->state([$decoded]);
+                                            }
+                                        } else {
+                                            $component->state([]);
+                                        }
+                                    } else {
+                                        $component->state([]);
+                                    }
+                                } else {
+                                    $component->state([]);
+                                }
+                            })
+                            ->helperText(fn (Forms\Get $get) => static::getJsonHelperText($get('key')))
+                            ->dehydrated(false),
 
-        // JSON content
-        Forms\Components\Textarea::make('json_input')
-            ->label('JSON Content')
-            ->rows(8)
-            ->visible(fn (Forms\Get $get) => $get('type') === 'json')
-            ->required(fn (Forms\Get $get) => $get('type') === 'json')
-            ->helperText('Enter valid JSON data')
-            ->live(onBlur: true)
-            ->afterStateUpdated(fn ($state, Forms\Set $set) => $set('content', $state))
-            ->afterStateHydrated(function ($component, $state, $record) {
-                if (!$record || $record->type !== 'json') {
-                    return;
-                }
-
-                $content = $record->getRawOriginal('content');
-                if (is_string($content)) {
-                    $decoded = json_decode($content, true);
-                    if ($decoded !== null) {
-                        $component->state(json_encode($decoded, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-                    } else {
-                        $component->state($content);
-                    }
-                } else {
-                    $component->state('{}');
-                }
-            })
-            ->rules([
-                fn (Forms\Get $get) => $get('type') === 'json' ? function ($attribute, $value, $fail) {
-                    if (!empty($value)) {
-                        json_decode($value);
-                        if (json_last_error() !== JSON_ERROR_NONE) {
-                            $fail('The content must be valid JSON: ' . json_last_error_msg());
-                        }
-                    }
-                } : '',
-            ])
-            ->dehydrated(false),
-
-        // Meta data
-        Forms\Components\KeyValue::make('meta')
-            ->helperText('Additional metadata (alt text for images, captions, etc.)')
-            ->addable(true)
-            ->deletable(true)
-            ->keyLabel('Property')
-            ->valueLabel('Value'),
-    ]),
+                        // Meta data
+                        Forms\Components\KeyValue::make('meta')
+                            ->helperText('Additional metadata (alt text for images, captions, etc.)')
+                            ->addable(true)
+                            ->deletable(true)
+                            ->keyLabel('Property')
+                            ->valueLabel('Value'),
+                    ]),
             ]);
     }
 
@@ -502,366 +525,337 @@ Forms\Components\Section::make('Content')
         ];
     }
 
-    // Helper method to get JSON schema based on key
+    // Helper method to get JSON label based on key
+    protected static function getJsonLabel(string $key): string
+    {
+        return match ($key) {
+            'face_meanings' => 'FACE Meanings',
+            'approach_items' => 'Approach Items',
+            'ticket_info' => 'Ticket Information',
+            'gallery_items' => 'Gallery Items',
+            'testimonials' => 'Winner Testimonials',
+            'event_schedule' => 'Event Schedule',
+            'team_members' => 'Team Members',
+            default => 'JSON Data'
+        };
+    }
+
+    // Helper method to get JSON helper text based on key
+    protected static function getJsonHelperText(string $key): string
+    {
+        return match ($key) {
+            'face_meanings' => 'Add the meanings for each letter in FACE (Focus, Authenticity, Community, Excellence)',
+            'approach_items' => 'Add items that describe your approach or methodology',
+            'ticket_info' => 'Add different ticket types with pricing and descriptions',
+            'gallery_items' => 'Add images for the gallery section with titles and descriptions. Use Curator gallery for image URLs.',
+            'testimonials' => 'Add testimonials from past winners or participants. Use Curator gallery for profile images.',
+            'event_schedule' => 'Add events with times, titles and descriptions for the ceremony schedule',
+            'team_members' => 'Add organizing team members with their roles and contact information. Use Curator gallery for profile images.',
+            default => 'Build your structured data by adding items with the form fields below'
+        };
+    }
+
+    // Helper method to get JSON schema based on key - CURATOR URL VERSION
     protected static function getJsonSchema(string $key): array
     {
         return match ($key) {
             'face_meanings' => [
-                Forms\Components\TextInput::make('letter')
-                    ->label('Letter')
-                    ->required()
-                    ->maxLength(1)
-                    ->placeholder('F')
-                    ->columnSpan(1),
-                Forms\Components\TextInput::make('word')
-                    ->label('Word')
-                    ->required()
-                    ->placeholder('Focus')
-                    ->columnSpan(2),
+                Forms\Components\Grid::make(3)->schema([
+                    Forms\Components\TextInput::make('letter')
+                        ->label('Letter')
+                        ->required()
+                        ->maxLength(1)
+                        ->placeholder('F')
+                        ->columnSpan(1),
+                    Forms\Components\TextInput::make('word')
+                        ->label('Word')
+                        ->required()
+                        ->placeholder('Focus')
+                        ->columnSpan(2),
+                ]),
                 Forms\Components\Textarea::make('description')
                     ->label('Description')
                     ->required()
                     ->rows(2)
-                    ->placeholder('The unwavering commitment to vision and purpose')
-                    ->columnSpanFull(),
+                    ->placeholder('The unwavering commitment to vision and purpose'),
             ],
             'approach_items' => [
-                Forms\Components\TextInput::make('title')
-                    ->label('Title')
-                    ->required()
-                    ->placeholder('Global Reach, Local Impact')
-                    ->columnSpan(2),
-                Forms\Components\TextInput::make('icon')
-                    ->label('Icon')
-                    ->required()
-                    ->placeholder('globe')
-                    ->helperText('Icon name (e.g., globe, users, trophy)')
-                    ->columnSpan(1),
+                Forms\Components\Grid::make(3)->schema([
+                    Forms\Components\TextInput::make('title')
+                        ->label('Title')
+                        ->required()
+                        ->placeholder('Global Reach, Local Impact')
+                        ->columnSpan(2),
+                    Forms\Components\TextInput::make('icon')
+                        ->label('Icon')
+                        ->required()
+                        ->placeholder('globe')
+                        ->helperText('Icon name (e.g., globe, users, trophy)')
+                        ->columnSpan(1),
+                ]),
                 Forms\Components\Textarea::make('description')
                     ->label('Description')
                     ->required()
                     ->rows(3)
-                    ->placeholder('Recognizing excellence worldwide...')
-                    ->columnSpanFull(),
+                    ->placeholder('Recognizing excellence worldwide...'),
             ],
             'ticket_info' => [
-                Forms\Components\TextInput::make('type')
-                    ->label('Ticket Type')
-                    ->required()
-                    ->placeholder('Standard Attendance')
-                    ->columnSpan(1),
-                Forms\Components\TextInput::make('price')
-                    ->label('Price')
-                    ->required()
-                    ->placeholder('$250')
-                    ->columnSpan(1),
+                Forms\Components\Grid::make(2)->schema([
+                    Forms\Components\TextInput::make('type')
+                        ->label('Ticket Type')
+                        ->required()
+                        ->placeholder('Standard Attendance'),
+                    Forms\Components\TextInput::make('price')
+                        ->label('Price')
+                        ->required()
+                        ->placeholder('$250'),
+                ]),
                 Forms\Components\Textarea::make('description')
                     ->label('Description')
                     ->required()
                     ->rows(2)
-                    ->placeholder('General admission with dinner')
-                    ->columnSpan(2),
+                    ->placeholder('General admission with dinner'),
             ],
             'gallery_items' => [
-                Forms\Components\TextInput::make('title')
-                    ->label('Image Title')
-                    ->required()
-                    ->columnSpan(2),
+                Forms\Components\Grid::make(2)->schema([
+                    Forms\Components\TextInput::make('title')
+                        ->label('Image Title')
+                        ->required(),
+                    Forms\Components\TextInput::make('category')
+                        ->label('Category')
+                        ->placeholder('Awards, Events, etc.'),
+                ]),
                 Forms\Components\TextInput::make('image_url')
                     ->label('Image URL')
                     ->url()
                     ->required()
-                    ->columnSpan(1),
+                    ->placeholder('https://your-domain.com/storage/media/gallery-image.jpg')
+                    ->helperText('Copy image URL from Curator gallery')
+                    ->suffixAction(
+                        Forms\Components\Actions\Action::make('gallery')
+                            ->icon('heroicon-o-photo')
+                            ->url('/admin/curator/media', shouldOpenInNewTab: true)
+                            ->tooltip('Open Curator Gallery')
+                    ),
                 Forms\Components\Textarea::make('description')
                     ->label('Description')
-                    ->rows(2)
-                    ->columnSpan(2),
-                Forms\Components\TextInput::make('category')
-                    ->label('Category')
-                    ->placeholder('Awards, Events, etc.')
-                    ->columnSpan(1),
+                    ->rows(2),
             ],
             'testimonials' => [
-                Forms\Components\TextInput::make('name')
-                    ->label('Name')
-                    ->required()
-                    ->columnSpan(1),
-                Forms\Components\TextInput::make('title')
-                    ->label('Title/Position')
-                    ->required()
-                    ->columnSpan(1),
-                Forms\Components\TextInput::make('company')
-                    ->label('Company')
-                    ->columnSpan(1),
+                Forms\Components\Grid::make(3)->schema([
+                    Forms\Components\TextInput::make('name')
+                        ->label('Name')
+                        ->required(),
+                    Forms\Components\TextInput::make('title')
+                        ->label('Title/Position')
+                        ->required(),
+                    Forms\Components\TextInput::make('company')
+                        ->label('Company'),
+                ]),
                 Forms\Components\Textarea::make('quote')
                     ->label('Quote')
                     ->required()
-                    ->rows(3)
-                    ->columnSpanFull(),
-                Forms\Components\TextInput::make('image')
-                    ->label('Profile Image URL')
-                    ->url()
-                    ->columnSpan(2),
-                Forms\Components\TextInput::make('rating')
-                    ->label('Rating (1-5)')
-                    ->numeric()
-                    ->minValue(1)
-                    ->maxValue(5)
-                    ->columnSpan(1),
+                    ->rows(3),
+                Forms\Components\Grid::make(2)->schema([
+                    Forms\Components\TextInput::make('image')
+                        ->label('Profile Image URL')
+                        ->url()
+                        ->placeholder('https://your-domain.com/storage/media/profile.jpg')
+                        ->helperText('Copy image URL from Curator gallery')
+                        ->suffixAction(
+                            Forms\Components\Actions\Action::make('gallery')
+                                ->icon('heroicon-o-photo')
+                                ->url('/admin/curator/media', shouldOpenInNewTab: true)
+                                ->tooltip('Open Curator Gallery')
+                        ),
+                    Forms\Components\TextInput::make('rating')
+                        ->label('Rating (1-5)')
+                        ->numeric()
+                        ->minValue(1)
+                        ->maxValue(5),
+                ]),
             ],
             'event_schedule' => [
-                Forms\Components\TextInput::make('time')
-                    ->label('Time')
-                    ->required()
-                    ->placeholder('7:00 PM')
-                    ->columnSpan(1),
-                Forms\Components\TextInput::make('title')
-                    ->label('Event Title')
-                    ->required()
-                    ->columnSpan(2),
-                Forms\Components\Textarea::make('description')
-                    ->label('Description')
-                    ->rows(2)
-                    ->columnSpan(2),
-                Forms\Components\TextInput::make('location')
-                    ->label('Location')
-                    ->columnSpan(1),
+                Forms\Components\Grid::make(3)->schema([
+                    Forms\Components\TextInput::make('time')
+                        ->label('Time')
+                        ->required()
+                        ->placeholder('7:00 PM'),
+                    Forms\Components\TextInput::make('title')
+                        ->label('Event Title')
+                        ->required()
+                        ->columnSpan(2),
+                ]),
+                Forms\Components\Grid::make(2)->schema([
+                    Forms\Components\Textarea::make('description')
+                        ->label('Description')
+                        ->rows(2),
+                    Forms\Components\TextInput::make('location')
+                        ->label('Location'),
+                ]),
             ],
             'team_members' => [
-                Forms\Components\TextInput::make('name')
-                    ->label('Name')
-                    ->required()
-                    ->columnSpan(1),
-                Forms\Components\TextInput::make('position')
-                    ->label('Position')
-                    ->required()
-                    ->columnSpan(1),
-                Forms\Components\TextInput::make('department')
-                    ->label('Department')
-                    ->columnSpan(1),
-                Forms\Components\Textarea::make('bio')
-                    ->label('Bio')
-                    ->rows(3)
-                    ->columnSpan(2),
-                Forms\Components\TextInput::make('image')
-                    ->label('Profile Image URL')
-                    ->url()
-                    ->columnSpan(1),
-                Forms\Components\TextInput::make('email')
-                    ->label('Email')
-                    ->email()
-                    ->columnSpan(1),
-                Forms\Components\TextInput::make('linkedin')
-                    ->label('LinkedIn URL')
-                    ->url()
-                    ->columnSpan(1),
-            ],
-            // Generic fallback for unknown keys
-            default => [
-                Forms\Components\TextInput::make('title')
-                    ->label('Title')
-                    ->required()
-                    ->columnSpan(2),
-                Forms\Components\TextInput::make('value')
-                    ->label('Value')
-                    ->columnSpan(1),
-                Forms\Components\Textarea::make('description')
-                    ->label('Description')
-                    ->rows(2)
-                    ->columnSpanFull(),
-            ]
-        };
-    }
+                Forms\Components\Grid::make(3)->schema([
+                    Forms\Components\TextInput::make('name')
+                        ->label('Name')
+                        ->required(),
+                    Forms\Components\TextInput::make('position')
+                        ->label('Position')->required(),
+                   Forms\Components\TextInput::make('department')
+                       ->label('Department'),
+               ]),
+               Forms\Components\Textarea::make('bio')
+                   ->label('Bio')
+                   ->rows(3),
+               Forms\Components\Grid::make(3)->schema([
+                   Forms\Components\TextInput::make('image')
+                       ->label('Profile Image URL')
+                       ->url()
+                       ->placeholder('https://your-domain.com/storage/media/team-member.jpg')
+                       ->helperText('Copy image URL from Curator gallery')
+                       ->suffixAction(
+                           Forms\Components\Actions\Action::make('gallery')
+                               ->icon('heroicon-o-photo')
+                               ->url('/admin/curator/media', shouldOpenInNewTab: true)
+                               ->tooltip('Open Curator Gallery')
+                       ),
+                   Forms\Components\TextInput::make('email')
+                       ->label('Email')
+                       ->email(),
+                   Forms\Components\TextInput::make('linkedin')
+                       ->label('LinkedIn URL')
+                       ->url(),
+               ]),
+           ],
+           // Generic fallback for unknown keys
+           default => [
+               Forms\Components\Grid::make(2)->schema([
+                   Forms\Components\TextInput::make('title')
+                       ->label('Title')
+                       ->required(),
+                   Forms\Components\TextInput::make('value')
+                       ->label('Value'),
+               ]),
+               Forms\Components\Textarea::make('description')
+                   ->label('Description')
+                   ->rows(2),
+           ]
+            };
+   }
 
-    protected static function getJsonAddLabel(string $key): string
-    {
-        return match ($key) {
-            'face_meanings' => 'Add FACE Meaning',
-            'approach_items' => 'Add Approach Item',
-            'ticket_info' => 'Add Ticket Type',
-            'gallery_items' => 'Add Gallery Item',
-            'testimonials' => 'Add Testimonial',
-            'event_schedule' => 'Add Event',
-            'team_members' => 'Add Team Member',
-            default => 'Add Item'
-        };
-    }
+   protected static function getJsonAddLabel(string $key): string
+   {
+       return match ($key) {
+           'face_meanings' => 'Add FACE Meaning',
+           'approach_items' => 'Add Approach Item',
+           'ticket_info' => 'Add Ticket Type',
+           'gallery_items' => 'Add Gallery Item',
+           'testimonials' => 'Add Testimonial',
+           'event_schedule' => 'Add Event',
+           'team_members' => 'Add Team Member',
+           default => 'Add Item'
+       };
+   }
 
-    protected static function getJsonItemLabel(array $state, string $key): ?string
-    {
-        return match ($key) {
-            'face_meanings' => ($state['letter'] ?? '') . ' - ' . ($state['word'] ?? 'New FACE Meaning'),
-            'approach_items' => $state['title'] ?? 'New Approach Item',
-            'ticket_info' => $state['type'] ?? 'New Ticket Type',
-            'gallery_items' => $state['title'] ?? 'New Gallery Item',
-            'testimonials' => ($state['name'] ?? 'New Testimonial') . ($state['company'] ? ' - ' . $state['company'] : ''),
-            'event_schedule' => ($state['time'] ?? '') . ($state['title'] ? ' - ' . $state['title'] : 'New Event'),
-            'team_members' => ($state['name'] ?? 'New Team Member') . ($state['position'] ? ' - ' . $state['position'] : ''),
-            default => $state['title'] ?? $state['name'] ?? 'New Item'
-    };
-    }
+   protected static function getJsonItemLabel(array $state, string $key): ?string
+   {
+       return match ($key) {
+           'face_meanings' => ($state['letter'] ?? '') . ' - ' . ($state['word'] ?? 'New FACE Meaning'),
+           'approach_items' => $state['title'] ?? 'New Approach Item',
+           'ticket_info' => $state['type'] ?? 'New Ticket Type',
+           'gallery_items' => ($state['title'] ?? 'New Gallery Item') . ($state['image_url'] ? ' 🖼️' : ''),
+           'testimonials' => ($state['name'] ?? 'New Testimonial') . ($state['company'] ? ' - ' . $state['company'] : '') . ($state['image'] ? ' 🖼️' : ''),
+           'event_schedule' => ($state['time'] ?? '') . ($state['title'] ? ' - ' . $state['title'] : 'New Event'),
+           'team_members' => ($state['name'] ?? 'New Team Member') . ($state['position'] ? ' - ' . $state['position'] : '') . ($state['image'] ? ' 🖼️' : ''),
+           default => $state['title'] ?? $state['name'] ?? 'New Item'
+       };
+   }
 
-    // Helper method to format JSON preview in table
-    protected static function formatJsonPreview($record): string
-    {
-        $content = $record->getRawOriginal('content');
-        if (!$content) return '📄 Empty JSON';
+   // Helper method to format JSON preview in table
+   protected static function formatJsonPreview($record): string
+   {
+       $content = $record->getRawOriginal('content');
+       if (!$content) return '📄 Empty JSON';
 
-        $decoded = json_decode($content, true);
-        if ($decoded === null) return '❌ Invalid JSON';
+       $decoded = json_decode($content, true);
+       if ($decoded === null) return '❌ Invalid JSON';
 
-        if (is_array($decoded)) {
-            $count = count($decoded);
+       if (is_array($decoded)) {
+           $count = count($decoded);
 
-            // Handle specific known structures
-            if (isset($decoded[0]) && is_array($decoded[0])) {
-                // Array of objects
-                $firstItem = $decoded[0];
+           // Handle specific known structures
+           if (isset($decoded[0]) && is_array($decoded[0])) {
+               // Array of objects
+               $firstItem = $decoded[0];
 
-                if (isset($firstItem['letter'], $firstItem['word'])) {
-                    // FACE meanings
-                    $letters = array_column($decoded, 'letter');
-                    return "📄 FACE Meanings ({$count}): " . implode('', $letters);
-                }
+               if (isset($firstItem['letter'], $firstItem['word'])) {
+                   // FACE meanings
+                   $letters = array_column($decoded, 'letter');
+                   return "📄 FACE Meanings ({$count}): " . implode('', $letters);
+               }
 
-                if (isset($firstItem['title'], $firstItem['icon'])) {
-                    // Approach items
-                    $titles = array_slice(array_column($decoded, 'title'), 0, 2);
-                    $preview = implode(', ', $titles);
-                    if ($count > 2) $preview .= '...';
-                    return "📄 Approach Items ({$count}): {$preview}";
-                }
+               if (isset($firstItem['title'], $firstItem['icon'])) {
+                   // Approach items
+                   $titles = array_slice(array_column($decoded, 'title'), 0, 2);
+                   $preview = implode(', ', $titles);
+                   if ($count > 2) $preview .= '...';
+                   return "📄 Approach Items ({$count}): {$preview}";
+               }
 
-                if (isset($firstItem['type'], $firstItem['price'])) {
-                    // Ticket info
-                    $types = array_slice(array_column($decoded, 'type'), 0, 2);
-                    $preview = implode(', ', $types);
-                    if ($count > 2) $preview .= '...';
-                    return "📄 Ticket Types ({$count}): {$preview}";
-                }
+               if (isset($firstItem['type'], $firstItem['price'])) {
+                   // Ticket info
+                   $types = array_slice(array_column($decoded, 'type'), 0, 2);
+                   $preview = implode(', ', $types);
+                   if ($count > 2) $preview .= '...';
+                   return "📄 Ticket Types ({$count}): {$preview}";
+               }
 
-                if (isset($firstItem['name'], $firstItem['quote'])) {
-                    // Testimonials
-                    $names = array_slice(array_column($decoded, 'name'), 0, 2);
-                    $preview = implode(', ', $names);
-                    if ($count > 2) $preview .= '...';
-                    return "📄 Testimonials ({$count}): {$preview}";
-                }
+               if (isset($firstItem['name'], $firstItem['quote'])) {
+                   // Testimonials
+                   $names = array_slice(array_column($decoded, 'name'), 0, 2);
+                   $preview = implode(', ', $names);
+                   if ($count > 2) $preview .= '...';
+                   return "📄 Testimonials ({$count}): {$preview}";
+               }
 
-                if (isset($firstItem['time'], $firstItem['title'])) {
-                    // Event schedule
-                    $events = array_slice(array_column($decoded, 'title'), 0, 2);
-                    $preview = implode(', ', $events);
-                    if ($count > 2) $preview .= '...';
-                    return "📄 Events ({$count}): {$preview}";
-                }
+               if (isset($firstItem['time'], $firstItem['title'])) {
+                   // Event schedule
+                   $events = array_slice(array_column($decoded, 'title'), 0, 2);
+                   $preview = implode(', ', $events);
+                   if ($count > 2) $preview .= '...';
+                   return "📄 Events ({$count}): {$preview}";
+               }
 
-                if (isset($firstItem['name'], $firstItem['position'])) {
-                    // Team members
-                    $members = array_slice(array_column($decoded, 'name'), 0, 2);
-                    $preview = implode(', ', $members);
-                    if ($count > 2) $preview .= '...';
-                    return "📄 Team Members ({$count}): {$preview}";
-                }
+               if (isset($firstItem['name'], $firstItem['position'])) {
+                   // Team members
+                   $members = array_slice(array_column($decoded, 'name'), 0, 2);
+                   $preview = implode(', ', $members);
+                   if ($count > 2) $preview .= '...';
+                   return "📄 Team Members ({$count}): {$preview}";
+               }
 
-                if (isset($firstItem['title'], $firstItem['image_url'])) {
-                    // Gallery items
-                    $titles = array_slice(array_column($decoded, 'title'), 0, 2);
-                    $preview = implode(', ', $titles);
-                    if ($count > 2) $preview .= '...';
-                    return "📄 Gallery Items ({$count}): {$preview}";
-                }
+               if (isset($firstItem['title'], $firstItem['image_url'])) {
+                   // Gallery items
+                   $titles = array_slice(array_column($decoded, 'title'), 0, 2);
+                   $preview = implode(', ', $titles);
+                   if ($count > 2) $preview .= '...';
+                   return "📄 Gallery Items ({$count}): {$preview}";
+               }
 
-                // Generic array of objects
-                $keys = array_keys($firstItem);
-                $preview = implode(', ', array_slice($keys, 0, 3));
-                if (count($keys) > 3) $preview .= '...';
-                return "📄 Structured data ({$count} items): {$preview}";
-            } else {
-                // Simple key-value pairs
-                $keys = array_keys($decoded);
-                $preview = implode(', ', array_slice($keys, 0, 3));
-                if (count($keys) > 3) $preview .= '...';
-                return "📄 Data ({$count} keys): {$preview}";
-            }
-        }
+               // Generic array of objects
+               $keys = array_keys($firstItem);
+               $preview = implode(', ', array_slice($keys, 0, 3));
+               if (count($keys) > 3) $preview .= '...';
+               return "📄 Structured data ({$count} items): {$preview}";
+           } else {
+               // Simple key-value pairs
+               $keys = array_keys($decoded);
+               $preview = implode(', ', array_slice($keys, 0, 3));
+               if (count($keys) > 3) $preview .= '...';
+               return "📄 Data ({$count} keys): {$preview}";
+           }
+       }
 
-        return '📄 JSON Object';
-    }
-
-    // Helper method to convert JSON to key-value pairs for editing
-    protected static function jsonToKeyValue($json): array
-    {
-        if (!is_array($json)) return [];
-
-        $result = [];
-
-        // Handle array of objects (like face_meanings, approach_items)
-        if (isset($json[0]) && is_array($json[0])) {
-            foreach ($json as $index => $item) {
-                foreach ($item as $key => $value) {
-                    $result["{$index}_{$key}"] = is_array($value) ? json_encode($value) : $value;
-                }
-            }
-        } else {
-            // Handle simple key-value pairs
-            foreach ($json as $key => $value) {
-                $result[$key] = is_array($value) ? json_encode($value) : $value;
-            }
-        }
-
-        return $result;
-    }
-
-    // Helper method to convert key-value pairs back to JSON
-    protected static function keyValueToJson($kvPairs, $structure = 'object'): string
-    {
-        if (empty($kvPairs)) return '{}';
-
-        $result = [];
-
-        // Group by index if we detect numbered keys (like 0_letter, 0_word, 1_letter, 1_word)
-        $grouped = [];
-        foreach ($kvPairs as $key => $value) {
-            if (preg_match('/^(\d+)_(.+)$/', $key, $matches)) {
-                $index = $matches[1];
-                $field = $matches[2];
-                $grouped[$index][$field] = $value;
-            } else {
-                $result[$key] = $value;
-            }
-        }
-
-        // If we have grouped items, create array of objects
-        if (!empty($grouped)) {
-            $result = array_values($grouped);
-        }
-
-        return json_encode($result, JSON_UNESCAPED_UNICODE);
-    }
-
-    // Helper method to process JSON content during form submission
-    protected static function processJsonContent($get): string
-    {
-        $repeaterContent = $get('json_content');
-        $simpleContent = $get('json_simple');
-        $textareaContent = $get('json_textarea_content');
-
-        // Prefer textarea content if provided (for complex structures)
-        if (!empty($textareaContent)) {
-            return $textareaContent;
-        }
-
-        // Use repeater content for structured data (face_meanings, approach_items, etc.)
-        if (!empty($repeaterContent) && is_array($repeaterContent)) {
-            return json_encode($repeaterContent, JSON_UNESCAPED_UNICODE);
-        }
-
-        // Use simple key-value pairs for basic objects
-        if (!empty($simpleContent) && is_array($simpleContent)) {
-            return json_encode($simpleContent, JSON_UNESCAPED_UNICODE);
-        }
-
-        return '{}';
-    }
+       return '📄 JSON Object';
+   }
 }

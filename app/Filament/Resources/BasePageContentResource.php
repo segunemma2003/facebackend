@@ -257,8 +257,8 @@ abstract class BasePageContentResource extends Resource
                     ->label('Active'),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->modalContent(fn ($record) => view('filament.pages.content-preview', compact('record'))),
+                // Tables\Actions\ViewAction::make()
+                //     ->modalContent(fn ($record) => view('filament.pages.content-preview', compact('record'))),
 
                 Tables\Actions\EditAction::make(),
 
