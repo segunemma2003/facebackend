@@ -19,3 +19,12 @@ Homestead.yaml
 npm-debug.log
 Thumbs.db
 yarn-error.log
+
+/storage/*.key
+/storage/app/*
+!/storage/app/.gitignore
+!/storage/app/public/
+/storage/app/public/*
+!/storage/app/public/.gitignore
+/storage/framework/
+/storage/logs/
