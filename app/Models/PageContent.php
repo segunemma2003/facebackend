@@ -56,6 +56,15 @@ class PageContent extends Model
                 'team' => 'Team Section',
                 'call_to_action' => 'Call to Action'
             ],
+            'projects' => [
+    'hero' => 'Hero Section',
+    'introduction' => 'Introduction Section',
+    'for_homeless' => 'For the Homeless Projects',
+    'for_women' => 'For Women Projects',
+    'farming_food_justice' => 'Farming & Food Justice Projects',
+    'social_justice' => 'Social Justice Projects',
+    'call_to_action' => 'Call to Action Section'
+],
             'approach' => [
                 'hero' => 'Hero Section',
                 'introduction' => 'Introduction',
