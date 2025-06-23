@@ -13,6 +13,9 @@ class CategoriesContentResource extends BasePageContentResource
 
     protected static ?int $navigationSort = 3;
 
+    protected static bool $shouldRegisterNavigation = false;
+
+
     protected static function getPageName(): string
     {
         return 'categories';

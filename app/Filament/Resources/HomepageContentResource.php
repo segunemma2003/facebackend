@@ -325,7 +325,7 @@ class HomepageContentResource extends BasePageContentResource
                                     Forms\Components\Actions\Action::make('open_gallery')
                                         ->label('🖼️ Open Curator Gallery')
                                         ->color('primary')
-                                        ->url('/admin/curator/media', shouldOpenInNewTab: true)
+                                        ->url('/admin/media', shouldOpenInNewTab: true)
                                         ->icon('heroicon-o-photo'),
                                 ])
                                     ->alignCenter()
@@ -409,7 +409,7 @@ class HomepageContentResource extends BasePageContentResource
                             ->suffixAction(
                                 Forms\Components\Actions\Action::make('open_gallery_for_image')
                                     ->icon('heroicon-o-photo')
-                                    ->url('/admin/curator/media', shouldOpenInNewTab: true)
+                                    ->url('/admin/media', shouldOpenInNewTab: true)
                                     ->tooltip('Open Curator Gallery')
                             )
                             ->live(onBlur: true)
@@ -634,7 +634,7 @@ class HomepageContentResource extends BasePageContentResource
                     ->suffixAction(
                         Forms\Components\Actions\Action::make('gallery')
                             ->icon('heroicon-o-photo')
-                            ->url('/admin/curator/media', shouldOpenInNewTab: true)
+                            ->url('/admin/media', shouldOpenInNewTab: true)
                             ->tooltip('Open Curator Gallery')
                     ),
                 Forms\Components\Textarea::make('description')
@@ -665,7 +665,7 @@ class HomepageContentResource extends BasePageContentResource
                         ->suffixAction(
                             Forms\Components\Actions\Action::make('gallery')
                                 ->icon('heroicon-o-photo')
-                                ->url('/admin/curator/media', shouldOpenInNewTab: true)
+                                ->url('/admin/media', shouldOpenInNewTab: true)
                                 ->tooltip('Open Curator Gallery')
                         ),
                     Forms\Components\TextInput::make('rating')
@@ -716,7 +716,7 @@ class HomepageContentResource extends BasePageContentResource
                        ->suffixAction(
                            Forms\Components\Actions\Action::make('gallery')
                                ->icon('heroicon-o-photo')
-                               ->url('/admin/curator/media', shouldOpenInNewTab: true)
+                               ->url('/admin/media', shouldOpenInNewTab: true)
                                ->tooltip('Open Curator Gallery')
                        ),
                    Forms\Components\TextInput::make('email')

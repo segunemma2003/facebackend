@@ -13,6 +13,8 @@ class FooterContentResource extends BasePageContentResource
 
     protected static ?int $navigationSort = 9;
 
+     protected static bool $shouldRegisterNavigation = false;
+
     protected static function getPageName(): string
     {
         return 'footer';

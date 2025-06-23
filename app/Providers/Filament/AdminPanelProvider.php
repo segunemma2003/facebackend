@@ -78,6 +78,7 @@ class AdminPanelProvider extends PanelProvider
                 ->navigationGroup('Content')
                 ->navigationSort(3)
                 ->navigationCountBadge()
+                ->navigationLabel('Media Gallery')
                 ->registerNavigation(true),
         ])
             ->sidebarCollapsibleOnDesktop()
