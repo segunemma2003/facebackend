@@ -219,7 +219,15 @@ class ContactContentResource extends BasePageContentResource
                                     'phone_toll_free_label' => 'Toll Free Phone Label',
                                     'address_section_title' => 'Address Section Title',
                                     'office_hours_section_title' => 'Office Hours Section Title',
-                                    'response_time_label' => 'Response Time Label'
+                                    'response_time_label' => 'Response Time Label',
+                                    'google_maps_embed_url' => 'Google Maps Embed URL',
+                                    'primary_email' => 'Primary Email',
+                                    'nominations_email' => 'Nominations Email',
+                                    'phone_international' => 'International Phone',
+                                    'phone_toll_free' => 'Toll Free Phone',
+                                    'full_address' =>  'Physical Address',
+                                    'office_hours' => 'Office Hours',
+                                    'response_time' => 'Response Time'
                                 ],
                                 'form_messages' => [
                                     'validation_error_title' => 'Validation Error Title',
