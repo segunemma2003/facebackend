@@ -9,6 +9,15 @@ use App\Http\Controllers\Api\GalleryController;
 use App\Http\Controllers\Api\PageContentController;
 use App\Http\Controllers\Api\RegistrationController;
 use App\Http\Controllers\Api\SettingsController;
+use App\Http\Controllers\Api\HomeSettingsController;
+use App\Http\Controllers\Api\FooterSettingsController;
+use App\Http\Controllers\Api\GeneralGlobalSettingsController;
+use App\Http\Controllers\Api\AboutSettingsController;
+use App\Http\Controllers\Api\SuccessStoriesController;
+use App\Http\Controllers\Api\OurTeamController;
+use App\Http\Controllers\Api\AdvisoryBoardController;
+use App\Http\Controllers\Api\OurApproachController;
+use App\Http\Controllers\Api\ContactController;
 
 /*
 |--------------------------------------------------------------------------
@@ -63,6 +72,45 @@ Route::prefix('v1')->group(function () {
     Route::prefix('settings')->group(function () {
         Route::get('/', [SettingsController::class, 'index']);
         Route::get('/{key}', [SettingsController::class, 'show']);
+    });
+
+        // System Settings (Public - Read Only)
+    Route::prefix('system')->group(function () {
+        // Home Settings
+        Route::get('home-settings', [HomeSettingsController::class, 'index']);
+        Route::get('home-settings/{home_setting}', [HomeSettingsController::class, 'show']);
+
+        // Footer Settings
+        Route::get('footer-settings', [FooterSettingsController::class, 'index']);
+        Route::get('footer-settings/{footer_setting}', [FooterSettingsController::class, 'show']);
+
+        // General Global Settings
+        Route::get('general-global-settings', [GeneralGlobalSettingsController::class, 'index']);
+        Route::get('general-global-settings/{general_global_setting}', [GeneralGlobalSettingsController::class, 'show']);
+
+        // About Settings
+        Route::get('about-settings', [AboutSettingsController::class, 'index']);
+        Route::get('about-settings/{about_setting}', [AboutSettingsController::class, 'show']);
+
+        // Success Stories
+        Route::get('success-stories', [SuccessStoriesController::class, 'index']);
+        Route::get('success-stories/{success_story}', [SuccessStoriesController::class, 'show']);
+
+        // Our Team
+        Route::get('our-team', [OurTeamController::class, 'index']);
+        Route::get('our-team/{our_team}', [OurTeamController::class, 'show']);
+
+        // Advisory Board
+        Route::get('advisory-board', [AdvisoryBoardController::class, 'index']);
+        Route::get('advisory-board/{advisory_board}', [AdvisoryBoardController::class, 'show']);
+
+        // Our Approach
+        Route::get('our-approach', [OurApproachController::class, 'index']);
+        Route::get('our-approach/{our_approach}', [OurApproachController::class, 'show']);
+
+        // Contact Submissions (Read Only)
+        Route::get('contacts', [ContactController::class, 'index']);
+        Route::get('contacts/{contact}', [ContactController::class, 'show']);
     });
 
 
