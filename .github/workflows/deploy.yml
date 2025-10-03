@@ -144,8 +144,9 @@ jobs:
               echo "✅ Update deployment completed successfully!"
             fi
 
-            # Restart web server (adjust based on your setup)
+            # Restart web server and PHP services
             sudo systemctl reload nginx
+            sudo systemctl restart php8.3-fpm
             # sudo systemctl restart apache2  # Use this if you're using Apache
 
             echo "🎉 Deployment finished!"
