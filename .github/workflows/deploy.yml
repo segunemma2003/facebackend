@@ -101,7 +101,7 @@ jobs:
               sudo chmod -R 775 $APP_DIR/bootstrap/cache
 
               # Create symbolic link for storage (only once)
-              php artisan storage:link
+              #php artisan storage:link
 
               # Run database migrations
               php artisan migrate --force
@@ -146,7 +146,18 @@ jobs:
 
             # Restart web server and PHP services
             sudo systemctl reload nginx
-            sudo systemctl restart php8.3-fpm
+
+            # Try different PHP-FPM service names
+            sudo systemctl restart php8.3-fpm || sudo systemctl restart php8.2-fpm || sudo systemctl restart php8.1-fpm || sudo systemctl restart php-fpm || echo "PHP-FPM restart attempted"
+
+            # Clear all caches to ensure changes are visible
+            php artisan config:clear
+            php artisan route:clear
+            php artisan view:clear
+            php artisan cache:clear
+
+            # Restart nginx completely to ensure all changes are loaded
+            sudo systemctl restart nginx
             # sudo systemctl restart apache2  # Use this if you're using Apache
 
             echo "🎉 Deployment finished!"
