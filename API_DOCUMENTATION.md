@@ -3,7 +3,7 @@
 ## Base URL
 
 ```
-http://your-domain.com/api/v1/system
+
 ```
 
 ## Authentication
