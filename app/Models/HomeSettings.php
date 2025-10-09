@@ -32,5 +32,6 @@ class HomeSettings extends Model
         'timer' => 'boolean',
         'is_button' => 'boolean',
         'event_date' => 'datetime',
+        'section_pics' => 'array',
     ];
 }
