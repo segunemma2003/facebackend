@@ -116,8 +116,18 @@ jobs:
             else
               echo "🔄 Updating existing deployment..."
 
+              # Temporarily change ownership back to current user for git operations
+              sudo chown -R $USER:$USER $APP_DIR
+              
+              # Show current commit before pull
+              echo "Current commit: $(git rev-parse HEAD)"
+              echo "Current branch: $(git branch --show-current)"
+              
               # Pull latest changes
               git pull origin main
+              
+              # Show new commit after pull
+              echo "New commit: $(git rev-parse HEAD)"
 
               # Install/update dependencies
               composer install --no-dev --optimize-autoloader
@@ -135,7 +145,7 @@ jobs:
               php artisan route:cache
               php artisan view:cache
 
-              # Set proper permissions
+              # Set proper permissions AFTER all operations
               sudo chown -R www-data:www-data $APP_DIR
               sudo chmod -R 755 $APP_DIR
               sudo chmod -R 775 $APP_DIR/storage
