@@ -34,4 +34,20 @@ class HomeSettings extends Model
         'event_date' => 'datetime',
         'section_pics' => 'array',
     ];
+
+    // Handle array to string conversion for all fields
+    public function setAttribute($key, $value)
+    {
+        // Convert arrays to JSON for database storage
+        if (is_array($value) && in_array($key, ['section_pics'])) {
+            $value = json_encode($value);
+        }
+        
+        // Convert arrays to strings for text fields
+        if (is_array($value) && in_array($key, ['section_face_1', 'section_face_2', 'hero_description', 'current_program_description', 'about_description'])) {
+            $value = is_string($value) ? $value : implode(' ', $value);
+        }
+        
+        return parent::setAttribute($key, $value);
+    }
 }
