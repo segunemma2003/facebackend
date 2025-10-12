@@ -128,7 +128,10 @@ jobs:
               # Pull latest changes with verbose output
               echo "Pulling latest changes..."
               git fetch origin
-              git pull origin main
+              
+              # Reset to match remote exactly (discard local changes)
+              echo "Resetting to match remote main branch..."
+              git reset --hard origin/main
 
               # Show new commit after pull
               echo "New commit: $(git rev-parse HEAD)"
