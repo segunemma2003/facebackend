@@ -122,12 +122,18 @@ jobs:
               # Show current commit before pull
               echo "Current commit: $(git rev-parse HEAD)"
               echo "Current branch: $(git branch --show-current)"
-
-              # Pull latest changes
+              echo "Git status before pull:"
+              git status
+              
+              # Pull latest changes with verbose output
+              echo "Pulling latest changes..."
+              git fetch origin
               git pull origin main
-
+              
               # Show new commit after pull
               echo "New commit: $(git rev-parse HEAD)"
+              echo "Git status after pull:"
+              git status
 
               # Install/update dependencies
               composer install --no-dev --optimize-autoloader
