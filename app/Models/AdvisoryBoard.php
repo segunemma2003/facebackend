@@ -9,6 +9,8 @@ class AdvisoryBoard extends Model
 {
     use HasFactory;
 
+    protected $table = 'advisory_board';
+
     protected $fillable = [
         'name',
         'title',

@@ -9,6 +9,8 @@ class OurTeam extends Model
 {
     use HasFactory;
 
+    protected $table = 'our_team';
+
     protected $fillable = [
         'image',
         'name',
