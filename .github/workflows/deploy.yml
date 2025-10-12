@@ -118,14 +118,14 @@ jobs:
 
               # Temporarily change ownership back to current user for git operations
               sudo chown -R $USER:$USER $APP_DIR
-              
+
               # Show current commit before pull
               echo "Current commit: $(git rev-parse HEAD)"
               echo "Current branch: $(git branch --show-current)"
-              
+
               # Pull latest changes
               git pull origin main
-              
+
               # Show new commit after pull
               echo "New commit: $(git rev-parse HEAD)"
 
