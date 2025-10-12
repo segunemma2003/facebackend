@@ -9,6 +9,8 @@ class OurApproach extends Model
 {
     use HasFactory;
 
+    protected $table = 'our_approach';
+
     protected $fillable = [
         'step',
         'title',
