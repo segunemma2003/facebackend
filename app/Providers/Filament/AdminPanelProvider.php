@@ -30,6 +30,7 @@ class AdminPanelProvider extends PanelProvider
             ->sidebarWidth('15rem') /* Slimmer but readable */
             ->sidebarFullyCollapsibleOnDesktop(false)
             ->login()
+            ->loginRouteSlug('login')
             ->brandName('Awards Management')
             // ->brandLogo(asset('images/logo.png'))
             // ->favicon(asset('images/favicon.ico'))
