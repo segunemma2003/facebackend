@@ -143,6 +143,9 @@ jobs:
 
               # Run database migrations (if any)
               php artisan migrate --force
+              
+              # Seed the database with admin user
+              php artisan db:seed --class=AdminUserSeeder
 
               # Clear and rebuild cache
               php artisan config:clear
