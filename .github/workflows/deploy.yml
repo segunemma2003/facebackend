@@ -159,33 +159,24 @@ jobs:
               # Create storage link if it doesn't exist
               php artisan storage:link
 
-              # Rebuild caches
-              php artisan config:cache
-              php artisan route:cache
-              php artisan view:cache
-
-              # Set proper permissions AFTER all operations
+              # Set proper permissions BEFORE caching
               sudo chown -R www-data:www-data $APP_DIR
               sudo chmod -R 755 $APP_DIR
               sudo chmod -R 775 $APP_DIR/storage
               sudo chmod -R 775 $APP_DIR/bootstrap/cache
 
+              # Rebuild caches as www-data user
+              sudo -u www-data php artisan config:cache
+              sudo -u www-data php artisan route:cache
+              sudo -u www-data php artisan view:cache
+
               echo "✅ Update deployment completed successfully!"
             fi
 
-            # Restart web server and PHP services
-            sudo systemctl reload nginx
-
-            # Try different PHP-FPM service names
+            # Restart PHP services first
             sudo systemctl restart php8.3-fpm || sudo systemctl restart php8.2-fpm || sudo systemctl restart php8.1-fpm || sudo systemctl restart php-fpm || echo "PHP-FPM restart attempted"
 
-            # Clear all caches to ensure changes are visible
-            php artisan config:clear
-            php artisan route:clear
-            php artisan view:clear
-            php artisan cache:clear
-
-            # Restart nginx completely to ensure all changes are loaded
+            # Then restart nginx
             sudo systemctl restart nginx
             # sudo systemctl restart apache2  # Use this if you're using Apache
 
