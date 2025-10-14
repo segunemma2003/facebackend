@@ -108,7 +108,7 @@ jobs:
 
               # Cache configuration for production
               php artisan config:cache
-              # php artisan route:cache
+              php artisan route:cache
               php artisan view:cache
 
               echo "✅ First deployment completed successfully!"
@@ -144,8 +144,8 @@ jobs:
               # Run database migrations (if any)
               php artisan migrate --force
 
-              # Seed the database with admin user
-              php artisan db:seed --class=AdminUserSeeder
+              # Seed the database with admin user (force in production)
+              php artisan db:seed --class=AdminUserSeeder --force
 
               # Clear caches first
               php artisan config:clear
@@ -165,10 +165,17 @@ jobs:
               sudo chmod -R 775 $APP_DIR/storage
               sudo chmod -R 775 $APP_DIR/bootstrap/cache
 
+              # Ensure cache directories are writable by www-data
+              sudo chown -R www-data:www-data $APP_DIR/bootstrap/cache
+              sudo chown -R www-data:www-data $APP_DIR/storage
+
               # Rebuild caches as www-data user
               sudo -u www-data php artisan config:cache
               sudo -u www-data php artisan route:cache
               sudo -u www-data php artisan view:cache
+
+              # Verify ownership
+              ls -la $APP_DIR/bootstrap/cache/
 
               echo "✅ Update deployment completed successfully!"
             fi
