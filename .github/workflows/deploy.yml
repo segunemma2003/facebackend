@@ -156,6 +156,19 @@ jobs:
               # Publish Filament assets
               php artisan filament:assets
 
+              # Force asset publishing and compilation
+              php artisan vendor:publish --tag=filament-assets --force
+              php artisan filament:upgrade --force
+
+              # Check if Node.js is available and build assets if needed
+              if command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1; then
+                echo "Node.js detected, building assets..."
+                npm install --production
+                npm run build
+              else
+                echo "Node.js not available, using pre-built assets..."
+              fi
+
               # Create storage link if it doesn't exist
               php artisan storage:link
 
@@ -176,6 +189,11 @@ jobs:
 
               # Verify ownership
               ls -la $APP_DIR/bootstrap/cache/
+
+              # Verify Filament assets are accessible
+              echo "Checking Filament assets..."
+              ls -la $APP_DIR/public/js/filament/ || echo "Filament JS directory not found"
+              ls -la $APP_DIR/public/css/filament/ || echo "Filament CSS directory not found"
 
               echo "✅ Update deployment completed successfully!"
             fi
